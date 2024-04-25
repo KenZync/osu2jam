@@ -1,34 +1,33 @@
-import { ControlPointGroup, DifficultyPoint, TimingPoint } from 'osu-classes'
+import { ControlPointGroup, DifficultyPoint, HitObject, TimingPoint } from 'osu-classes'
 import { BeatmapDecoder } from 'osu-parsers'
 
 const maxSub = 192
 
-export const parseOsuFile = async () => {
-	const data: Blob = await $fetch('/one.osu', {})
+export const parseOsuFile = async (beatMapList: BeatMapList) => {
+	// const data: Blob = await $fetch('/one.osu', {})
 
-	const osuTextFile = await data.text()
-	const decoder = new BeatmapDecoder()
-	const parsedOsu = decoder.decodeFromString(osuTextFile)
+	// const osuTextFile = await data.text()
+	// const decoder = new BeatmapDecoder()
+	// const beatMapList.beatmap = decoder.decodeFromString(osuTextFile)
 	const parsedPackage: ojnPackage = {}
-
-	console.log(parsedOsu.bpm)
 
 	let timing: number
 	let sv: number = 1
 	let lastTiming = 0
-	console.log(parsedOsu)
-	const firstTimingBpm = parsedOsu.controlPoints.groups[0].startTime
+	// console.log(beatMapList.beatmap)
+	const firstTimingBpm = beatMapList.beatmap.controlPoints.groups[0].startTime
 	// const firstTimingNote = parsedOsu.controlPoints.groups[0].startTime
 
 	// Control points
-	if (parsedOsu.controlPoints.groups.length > 0) {
-		const lastControlPoint = parsedOsu.controlPoints.groups[parsedOsu.controlPoints.groups.length - 1]
+	if (beatMapList.beatmap.controlPoints.groups.length > 0) {
+		const lastControlPoint =
+			beatMapList.beatmap.controlPoints.groups[beatMapList.beatmap.controlPoints.groups.length - 1]
 		lastTiming = Math.max(lastTiming, lastControlPoint.startTime)
 	}
 
 	// Hit objects
-	if (parsedOsu.hitObjects.length > 0) {
-		const lastHitObject = parsedOsu.hitObjects[parsedOsu.hitObjects.length - 1]
+	if (beatMapList.beatmap.hitObjects.length > 0) {
+		const lastHitObject = beatMapList.beatmap.hitObjects[beatMapList.beatmap.hitObjects.length - 1]
 		if ((lastHitObject as any).endTime) {
 			lastTiming = Math.max(lastTiming, lastHitObject.startTime, (lastHitObject as any).endTime)
 		} else {
@@ -36,7 +35,7 @@ export const parseOsuFile = async () => {
 		}
 	}
 
-	const mainBpm = round(parsedOsu.bpm)
+	const mainBpm = round(beatMapList.beatmap.bpm)
 	const mainBeatLength = calculateBeatLength(mainBpm)
 
 	const appendOffset = mainBeatLength * 4 - firstTimingBpm
@@ -51,10 +50,10 @@ export const parseOsuFile = async () => {
 	let nowSub = 0
 	let bpm = -1
 	let timingPoint = []
-	parsedOsu.controlPoints.groups.forEach((group, i) => {
+	beatMapList.beatmap.controlPoints.groups.forEach((group: { controlPoints: ControlPointGroup[] }, i: number) => {
 		let duration = 0
 		// bpm = -1
-		group.controlPoints.forEach((point, j) => {
+		group.controlPoints.forEach((point, j: number) => {
 			if (point instanceof TimingPoint) {
 				bpm = point.bpm
 
@@ -67,8 +66,6 @@ export const parseOsuFile = async () => {
 		})
 
 		const nowBpm = round(bpm * sv)
-		// console.log('SV', nowBpm'SV', , sv)
-
 		sv = 1
 		const nowBeatLength = calculateBeatLength(nowBpm)
 
@@ -80,7 +77,6 @@ export const parseOsuFile = async () => {
 		nowSub = calculateSubmeasure(nowMeasure, maxSub)
 		prevBeatLength = nowBeatLength
 		prevTiming = timing
-		// console.log('BPM', nowBpm, timing, prevTiming, duration, nowMeasure)
 
 		if (!parsedPackage[measureDigit]) {
 			parsedPackage[measureDigit] = {
@@ -120,7 +116,7 @@ export const parseOsuFile = async () => {
 	}
 
 	//NOTE
-	parsedOsu.hitObjects.forEach((note) => {
+	beatMapList.beatmap.hitObjects.forEach((note: HitObject) => {
 		const timing = note.startTime
 		let measure = 0
 		let nowSub = 0
@@ -280,8 +276,8 @@ export const parseOsuFile = async () => {
 			parsedPackage[measure][channel].Events.sort((a, b) => a.sub - b.sub)
 		}
 	}
-	console.log(parsedPackage)
-	createOJN(parsedOsu, parsedPackage, mainBpm)
+	// console.log(parsedPackage)
+	createOJN(beatMapList.beatmap, parsedPackage, mainBpm)
 }
 
 export const parseOsuTextFile = async (data: string) => {

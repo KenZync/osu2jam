@@ -1,10 +1,13 @@
 <
 <template>
-	<UButton color="pink" @click="parseOsuFile">Osu</UButton>
+	<!-- <UButton color="pink" @click="parseOsuFile">Osu</UButton> -->
 
 	<DropZone class="drop-area text-center" @files-dropped="onInputChange" #default="{ dropZoneActive }">
 		<div class="flex items-center">
-			<label for="file-input" class="border-dashed border-2 cursor-pointer py-32 px-2 w-full">
+			<label
+				for="file-input"
+				class="border-dashed border-2 cursor-pointer w-full h-[140px] flex justify-center items-center"
+			>
 				<span v-if="dropZoneActive">
 					<span>Drop Them Here </span>
 					<span>to add them</span>
@@ -21,41 +24,119 @@
 			</label>
 		</div>
 	</DropZone>
-	{{ folderList }}
-	<!-- {{ entryList }} -->
-	<!-- <div v-for="file in osuFileList">
-		<div class="">{{ file.name }}</div>
-		<div v-for="beatmap in osuBeatmap">
-			{{ beatmap.bpm }}
-		</div>
-	</div> -->
+
+	<div class="grid lg:grid-cols-2 gap-3 pt-4">
+		<UCard class="group min-h-[140px]" v-for="(chart, i) in osuBeatmapList" :ui="{ body: { padding: '' } }">
+			<div class="flex relative">
+				<img
+					class="absolute rounded-l-md h-[140px] max-w-[186px] min-w-[186px]"
+					:src="getImage(chart.folder_id, chart.beatmap.events.backgroundPath)"
+				/>
+				<!-- {{ chart.beatmap.general }} -->
+				<div class="h-[140px] min-w-[186px] z-10 flex flex-row-reverse">
+					<div class="pt-2 pr-2">
+						<UTooltip text="o2maID">
+							<UBadge
+								color="white"
+								class="opacity-70 hover:opacity-100 transition"
+								size="xs"
+								:label="chart.beatmap.metadata.beatmapId"
+							/>
+						</UTooltip>
+					</div>
+				</div>
+
+				<div class="flex relative w-full bg-gradient-to-r from-gray-900 rounded-md -ml-1">
+					<img
+						class="absolute object-cover w-full h-[140px] opacity-10 rounded-md"
+						:src="getImage(chart.folder_id, chart.beatmap.events.backgroundPath)"
+					/>
+					<div class="flex flex-col justify-between w-full relative p-2">
+						<div class="z-10">
+							<div class="font-bold">
+								{{ chart.beatmap.metadata.titleUnicode }}
+							</div>
+							<div class="font-bold text-sm">by {{ chart.beatmap.metadata.artistUnicode }}</div>
+						</div>
+						<div class="text-sm text-gray-300">
+							{{ chart.beatmap.metadata.version }}
+						</div>
+						<div class="z-10">
+							<div class="leading-none text-sm">
+								<span class="text-gray-400">charted by </span>
+								<span class="font-bold text-gray-200">{{ chart.beatmap.metadata.creator }}</span>
+							</div>
+							<div class="flex gap-4">
+								<UTooltip text="Time / Duration" class="flex text-xs items-center">
+									<UIcon name="i-heroicons-clock-solid" />
+									<div class="">{{ fancyTimeFormat(chart.beatmap.length / 1000) }}</div>
+								</UTooltip>
+								<UTooltip text="BPM" class="flex text-xs items-center">
+									<UIcon name="i-heroicons-chevron-double-up-solid" />
+									<div class="">{{ round(chart.beatmap.bpm) }}</div>
+								</UTooltip>
+								<UTooltip text="Notes" class="flex text-xs items-center">
+									<UIcon name="i-mdi-music-note" dynamic />
+									<div class="">{{ chart.beatmap.hittable + chart.beatmap.holdable * 2 }}</div>
+								</UTooltip>
+							</div>
+							<div class="flex justify-between pt-1">
+								<UTooltip text="Mode">
+									<UBadge color="pink" label="osu!mania 7K" />
+								</UTooltip>
+
+								<div class="flex gap-1">
+									<UTooltip text="Level Hard / HX">
+										<UBadge color="red" :label="Math.round(chart.stars * 10)" />
+									</UTooltip>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div
+					class="flex-col justify-center items-center space-y-4 flex transition-all opacity-0 group-hover:opacity-100 group-hover:w-16 w-2"
+				>
+					<UTooltip text="Edit (WIP)">
+						<UButton color="pink" variant="ghost" icon="i-heroicons-pencil-square-20-solid" />
+						<!-- @click="openOJNViewer(chart)" -->
+					</UTooltip>
+					<UTooltip text="Download">
+						<UButton color="pink" variant="ghost" icon="i-heroicons-arrow-down-tray" @click="parseOsuFile(chart)" />
+					</UTooltip>
+				</div>
+			</div>
+		</UCard>
+	</div>
 </template>
 
 <script setup lang="ts">
-import { BlobReader, BlobWriter, TextReader, TextWriter, ZipReader, ZipWriter, type Entry } from '@zip.js/zip.js'
-import type { Beatmap } from 'osu-classes'
+import { BlobReader, BlobWriter, ZipReader } from '@zip.js/zip.js'
+import { ManiaRuleset } from 'osu-mania-stable'
 
-// const osuFileList = ref<File[]>([])
-const osuBeatmap = ref<BeatMapList[]>([])
+const osuBeatmapList = ref<BeatMapList[]>([])
 const folderList = ref<Folder[]>([])
-// const entryList = ref<EntryList[]>([])
 
-interface Folder {
-	id: number
-	name: string
-	files: File[]
-}
+const getImage = (folderId: number, imageName: string) => {
+	const folder = folderList.value.find((folder) => folder.id === folderId)
+	if (!folder) {
+		return 'Folder not found'
+	}
 
-interface BeatMapList {
-	folder_id: string
-	beatmap: Beatmap
+	// Check if the specified imageName exists in the folder's images
+	const imagePath = folder.images[imageName]
+	if (!imagePath) {
+		return ''
+	}
+
+	// You can perform additional operations here, like loading the image
+	// For now, just return the imagePath
+	return imagePath
 }
 
 const onInputChange = async (e: any) => {
 	folderList.value = []
-	osuBeatmap.value = []
-	// entryList.value = []
-	console.log(typeof e)
+	osuBeatmapList.value = []
 	let originalFiles
 	let drop = false
 	if (e.target.files) {
@@ -74,139 +155,118 @@ const onInputChange = async (e: any) => {
 		} else {
 			files = originalFiles
 		}
-		// console.log(files)
-		// Array.from(files).map(async (file) => {
-		// if (file.isDirectory) {
-		// 	let fileEntries = file.readEntries
-		// }
-		// console.log('isFile', file.name)
-		// console.log('isFolder', file.name)
-		// })
 		let allFiles = await parseFiles(files, drop)
-		// console.log(allFiles)
 
 		let id = 0
 		let unknownFolder: Folder = {
 			id: id,
 			name: 'unknown',
-			files: []
+			files: [],
+			images: {}
 		}
-		Array.from(allFiles).map(async (file) => {
-			id++
+		await Promise.all(
+			Array.from(allFiles).map(async (file) => {
+				id++
 
-			if (file.name.match(/\.osz$|\.zip$|\.7zip$\.rar$/i)) {
-				let osz: Folder = {
-					id: id,
-					name: file.name,
-					files: []
-				}
-				const zipFileReader = new BlobReader(file)
-				const zipReader = new ZipReader(zipFileReader)
-				const entries = await zipReader.getEntries()
-
-				await Promise.all(
-					entries.map(async (entry) => {
-						const blob = await entry.getData!(new BlobWriter())
-						let extractedFile = new File([blob], entry.filename)
-						osz.files.push(extractedFile)
-					})
-				)
-				// entries.forEach(async (entry) => {
-				// 	const textWriter = new TextWriter()
-
-				// 	const blobWriter = new BlobWriter()
-
-				// 	// entryListObj.entry.push(entry)
-				// 	// console.log(entry.filename)
-				// 	// oneFolder.files.push(entry)
-				// 	// console.log('FILE IN OSZ')
-				// 	// if (!entry.filename.match(/\.osu$/i)) {
-				// 	// 	const osu = await entry.getData!(textWriter)
-				// 	// }
-				// 	const blob = await entry.getData!(blobWriter)
-
-				// 	// 	console.log(entry.filename)
-				// 	// console.log(entry.filename, await blobToDataURL(osu))
-				// 	// console.log(entry.filename, await blobToBase64Async(osu))
-				// 	let extractedFile = new File([blob], entry.filename)
-				// 	osz.files.push(extractedFile)
-				// 	// console.log(extractedFile)
-
-				// 	// }
-				// 	// 	console.log(await parseOsuTextFile(osu))
-				// 	// 	osuBeatmap.value.push(await parseOsuTextFile(osu))
-				// 	// }
-				// })
-				folderList.value.push(osz)
-			} else {
-				if (Array.isArray(file.files)) {
-					let oneFolder: Folder = {
+				if (file.name.match(/\.osz$|\.zip$|\.7zip$|\.rar$/i)) {
+					let osz: Folder = {
 						id: id,
-						name: 'unknown',
-						files: []
+						name: file.name,
+						files: [],
+						images: {}
 					}
-					// console.log('FOUND FOLDER')
-					oneFolder.name = file.name
-					Array.from(file.files).map((oneFile) => {
-						oneFolder.files.push(oneFile as File)
-					})
-					folderList.value.push(oneFolder)
-				} else {
-					// console.log('FOUND FILES')
-					unknownFolder.files.push(file)
-					// folderList.value.push(oneFolder)
-				}
-				// if (file.name.match(/\.osu$/i)) {
-				// 	const fileReader = new FileReader()
-				// 	fileReader.readAsText(file)
-				// 	const osu: string = await new Promise((resolve, reject) => {
-				// 		fileReader.onload = function (event) {
-				// 			resolve(fileReader.result as string)
-				// 		}
-				// 	})
-				// 	console.log(await parseOsuTextFile(osu))
-				// }
-			}
-		})
+					const zipFileReader = new BlobReader(file)
+					const zipReader = new ZipReader(zipFileReader)
+					const entries = await zipReader.getEntries()
 
+					await Promise.all(
+						entries.map(async (entry) => {
+							const blob = await entry.getData!(new BlobWriter())
+							let extractedFile = new File([blob], entry.filename)
+							osz.files.push(extractedFile)
+						})
+					)
+					folderList.value.push(osz)
+				} else {
+					if (Array.isArray(file.files)) {
+						let oneFolder: Folder = {
+							id: id,
+							name: 'unknown',
+							files: [],
+							images: {}
+						}
+						// console.log('FOUND FOLDER')
+						oneFolder.name = file.name
+						Array.from(file.files).map((oneFile) => {
+							oneFolder.files.push(oneFile as File)
+						})
+						folderList.value.push(oneFolder)
+					} else {
+						unknownFolder.files.push(file)
+					}
+				}
+			})
+		)
 		if (unknownFolder.files.length !== 0) {
 			folderList.value.push(unknownFolder)
 		}
+		for (const [index, folder] of folderList.value.entries()) {
+			for (const file of folder.files) {
+				if (file.name.match(/\.osu$/i)) {
+					const fileReader = new FileReader()
+					fileReader.readAsText(file)
+					const osu: string = await new Promise((resolve) => {
+						fileReader.onload = function () {
+							resolve(fileReader.result as string)
+						}
+					})
+					const parsedOsu = await parseOsuTextFile(osu)
+					// console.log(parsedOsu)
+					const ruleset = new ManiaRuleset()
+					if (parsedOsu.difficulty.circleSize === 7) {
+						const difficultyCalculator = ruleset.createDifficultyCalculator(parsedOsu)
+						const difficultyAttributes = difficultyCalculator.calculate()
+						// let metadata: Metadata = {
+						// 	title: parsedOsu.metadata.title,
+						// 	titleUnicode: parsedOsu.metadata.titleUnicode,
+						// 	artist: parsedOsu.metadata.artistUnicode,
+						// 	artistUnicode: parsedOsu.metadata.artist,
+						// 	difficulty: difficultyAttributes.starRating,
+						// 	creator: parsedOsu.metadata.creator,
+						// 	bpm: parsedOsu.bpm,
+						// 	version: parsedOsu.metadata.version,
+						// 	background: parsedOsu.events.backgroundPath,
+						// 	audioFilename: parsedOsu.general.audioFilename
+						// }
 
-		// Array.from(allFiles).map(async (file) => {
-		// 	if (file.name.match(/\.osz$|\.zip$|\.7zip$\.rar$/i)) {
-		// 		const zipFileReader = new BlobReader(file)
-		// 		const zipReader = new ZipReader(zipFileReader)
-		// 		const entries = await zipReader.getEntries()
-		// 		const textWriter = new TextWriter()
+						osuBeatmapList.value.push({
+							folder_id: folder.id,
+							beatmap: parsedOsu,
+							stars: difficultyAttributes.starRating
+							// metadata: metadata
+						})
+					}
+				}
+				if (file.name.match(/\.png$|\.jpg$|\.jpeg$/i)) {
+					let base64 = await blobToBase64Async(file)
+					// file.name
+					// console.log('IMAGE', folder.id)
+					// folder.images.push()
+					// let newImage = { name: file.name, blob }
 
-		// 		entries.forEach(async (entry) => {
-		// 			if (entry.filename.match(/\.osu$/i)) {
-		// 				const osu = await entry.getData!(textWriter)
-		// 				console.log(await parseOsuTextFile(osu))
-		// 			}
-		// 		})
-		// 	} else {
-		// 		console.log('here')
-		// 		if (file.name.match(/\.osu$/i)) {
-		// 			const fileReader = new FileReader()
-		// 			fileReader.readAsText(file)
-		// 			const osu: string = await new Promise((resolve, reject) => {
-		// 				fileReader.onload = function (event) {
-		// 					resolve(fileReader.result as string)
-		// 				}
-		// 			})
-		// 			console.log(await parseOsuTextFile(osu))
-		// 		}
-		// 	}
-		// })
+					// Push the new image object into the images array
+					folderList.value[index].images[file.name] = 'data:image/png;base64,' + base64
+					// console.log
+				}
+			}
+		}
 	} catch (err) {
 		alert('err' + err)
 	} finally {
 	}
 }
 
-// onMounted(() => {
-// 	parseOsuFile()
-// })
+// const downloadChart = (beatmap: BeatMapList) => {
+// 	console.log(beatmap)
+// }
 </script>

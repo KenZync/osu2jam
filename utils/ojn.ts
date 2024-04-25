@@ -4,7 +4,7 @@ import { Buffer } from 'buffer'
 
 export const createOJN = (parsedOsu: Beatmap, parsedPackage: ojnPackage, mainBpm: number) => {
 	const ruleset = new ManiaRuleset()
-	console.log(parsedOsu)
+	// console.log(parsedOsu)
 	const difficultyCalculator = ruleset.createDifficultyCalculator(parsedOsu)
 	const difficultyAttributes = difficultyCalculator.calculate()
 	const level = Math.round(difficultyAttributes.starRating * 10)

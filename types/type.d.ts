@@ -54,3 +54,32 @@ interface BeatObject {
 	measure: number
 	sub: number
 }
+
+interface Metadata {
+	title: string
+	artist: string
+	artistUnicode: string
+	titleUnicode: string
+	difficulty: number
+	creator: string
+	bpm: number
+	version: string
+	background: string | null
+	audioFilename: string
+}
+
+interface Folder {
+	id: number
+	name: string
+	files: File[]
+	images: { [imageFileName: string]: string }
+}
+// 	images: { [name: string]: string }
+// }
+
+interface BeatMapList {
+	folder_id: number
+	beatmap: Beatmap
+	stars: number
+	// metadata: Metadata
+}
