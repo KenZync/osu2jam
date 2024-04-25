@@ -4,20 +4,24 @@ import { BeatmapDecoder } from 'osu-parsers'
 const maxSub = 192
 
 export const parseOsuFile = async (beatMapList: BeatMapList) => {
-	// const data: Blob = await $fetch('/one.osu', {})
-
-	// const osuTextFile = await data.text()
-	// const decoder = new BeatmapDecoder()
-	// const beatMapList.beatmap = decoder.decodeFromString(osuTextFile)
 	const parsedPackage: ojnPackage = {}
 
 	let timing: number
 	let sv: number = 1
 	let lastTiming = 0
 	// console.log(beatMapList.beatmap)
-	// const firstTimingBpm = beatMapList.beatmap.controlPoints.groups[0].startTime
-	// const firstTimingNote = parsedOsu.controlPoints.groups[0].startTime
-
+	let firstTimingBpm = 0
+	// let foundFirstTiming = false
+	const firstTimingNote = beatMapList.beatmap.controlPoints.groups[0].startTime
+	outerLoop: for (const group of beatMapList.beatmap.controlPoints.groups) {
+		for (const point of group.controlPoints) {
+			if (point instanceof TimingPoint) {
+				firstTimingBpm = point.startTime // Storing the start time of the first timing point
+				break outerLoop // Break out of both loops
+			}
+		}
+	}
+	// console.log(firstTimingBpm)
 	// Control points
 	if (beatMapList.beatmap.controlPoints.groups.length > 0) {
 		const lastControlPoint =
@@ -38,7 +42,12 @@ export const parseOsuFile = async (beatMapList: BeatMapList) => {
 	const mainBpm = round(beatMapList.beatmap.bpm)
 	const mainBeatLength = calculateBeatLength(mainBpm)
 
-	// const appendOffset = mainBeatLength * 4 - firstTimingBpm
+	let appendOffset = mainBeatLength * 4 - firstTimingBpm
+
+	// while (firstTimingNote + appendOffset <= 1000) {
+	// 	appendOffset = appendOffset + mainBeatLength * 4
+	// }
+	// console.log(appendOffset)
 
 	const beatObject: BeatObject[] = []
 
@@ -59,12 +68,12 @@ export const parseOsuFile = async (beatMapList: BeatMapList) => {
 			if (point instanceof TimingPoint) {
 				bpm = point.bpm
 
-				timing = point.startTime
+				timing = point.startTime + appendOffset
 				found = true
 			}
 			if (point instanceof DifficultyPoint) {
 				sv = point.sliderVelocity
-				timing = point.startTime
+				timing = point.startTime + appendOffset
 				found = true
 			}
 		})
@@ -127,7 +136,7 @@ export const parseOsuFile = async (beatMapList: BeatMapList) => {
 
 	//NOTE
 	beatMapList.beatmap.hitObjects.forEach((note: HitObject) => {
-		const timing = note.startTime
+		const timing = note.startTime + appendOffset
 		let measure = 0
 		let nowSub = 0
 		let measureDigit = 0
@@ -200,6 +209,7 @@ export const parseOsuFile = async (beatMapList: BeatMapList) => {
 			}
 			parsedPackage[measureDigit][key].Events.push(startLNEvent)
 
+			let endTime = (note as any).endTime + appendOffset
 			let endMeasure = 0
 			let endNowSub = 0
 			let endMeasureDigit = 0
@@ -207,7 +217,7 @@ export const parseOsuFile = async (beatMapList: BeatMapList) => {
 			for (const [index, obj] of beatObject.entries()) {
 				const nextObj: BeatObject = beatObject[index + 1]
 				if (nextObj !== undefined) {
-					if ((note as any).endTime >= obj.offset && (note as any).endTime < nextObj.offset) {
+					if (endTime >= obj.offset && endTime < nextObj.offset) {
 						foundObject = obj
 						break
 					}
@@ -216,7 +226,7 @@ export const parseOsuFile = async (beatMapList: BeatMapList) => {
 				}
 			}
 
-			const relativeOffset = (note as any).endTime - foundObject.offset
+			const relativeOffset = endTime - foundObject.offset
 			endMeasure = foundObject.measure + calculateMeasure(relativeOffset, foundObject.beatLength)
 			endNowSub = calculateSubmeasure(endMeasure, maxSub)
 			endMeasureDigit = calculateMeasureDigit(endMeasure)
