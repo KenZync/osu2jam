@@ -11,11 +11,14 @@ export const parseOsuFile = async () => {
 	const parsedOsu = decoder.decodeFromString(osuTextFile)
 	const parsedPackage: ojnPackage = {}
 
-	let bpm: number
+	console.log(parsedOsu.bpm)
+
 	let timing: number
-	let sv: number
+	let sv: number = 1
 	let lastTiming = 0
-	const firstTiming = parsedOsu.controlPoints.groups[0].startTime
+	console.log(parsedOsu)
+	const firstTimingBpm = parsedOsu.controlPoints.groups[0].startTime
+	// const firstTimingNote = parsedOsu.controlPoints.groups[0].startTime
 
 	// Control points
 	if (parsedOsu.controlPoints.groups.length > 0) {
@@ -33,10 +36,10 @@ export const parseOsuFile = async () => {
 		}
 	}
 
-	const mainBpm = calculateMainBpm(parsedOsu.controlPoints.groups, lastTiming)
+	const mainBpm = round(parsedOsu.bpm)
 	const mainBeatLength = calculateBeatLength(mainBpm)
 
-	const appendOffset = mainBeatLength * 4 - firstTiming
+	const appendOffset = mainBeatLength * 4 - firstTimingBpm
 
 	const beatObject: BeatObject[] = []
 
@@ -46,14 +49,16 @@ export const parseOsuFile = async () => {
 	let measureDigit = 0
 	let nowMeasure: number = 0
 	let nowSub = 0
+	let bpm = -1
+	let timingPoint = []
 	parsedOsu.controlPoints.groups.forEach((group, i) => {
 		let duration = 0
+		// bpm = -1
 		group.controlPoints.forEach((point, j) => {
 			if (point instanceof TimingPoint) {
 				bpm = point.bpm
 
 				timing = point.startTime
-				sv = 1
 			}
 			if (point instanceof DifficultyPoint) {
 				sv = point.sliderVelocity
@@ -62,6 +67,9 @@ export const parseOsuFile = async () => {
 		})
 
 		const nowBpm = round(bpm * sv)
+		// console.log('SV', nowBpm'SV', , sv)
+
+		sv = 1
 		const nowBeatLength = calculateBeatLength(nowBpm)
 
 		duration = timing - prevTiming
@@ -72,6 +80,7 @@ export const parseOsuFile = async () => {
 		nowSub = calculateSubmeasure(nowMeasure, maxSub)
 		prevBeatLength = nowBeatLength
 		prevTiming = timing
+		// console.log('BPM', nowBpm, timing, prevTiming, duration, nowMeasure)
 
 		if (!parsedPackage[measureDigit]) {
 			parsedPackage[measureDigit] = {
@@ -99,6 +108,17 @@ export const parseOsuFile = async () => {
 		parsedPackage[measureDigit][1].Events.push(event)
 	})
 
+	// TODO MAKE IT BETTER
+	if (beatObject[0].offset !== 0) {
+		beatObject.unshift({
+			offset: 0,
+			beatLength: mainBeatLength,
+			bpm: mainBpm,
+			measure: 0,
+			sub: 0
+		})
+	}
+
 	//NOTE
 	parsedOsu.hitObjects.forEach((note) => {
 		const timing = note.startTime
@@ -122,6 +142,7 @@ export const parseOsuFile = async () => {
 				}
 			} else {
 				foundObject = obj
+				break
 			}
 		}
 
@@ -263,48 +284,8 @@ export const parseOsuFile = async () => {
 	createOJN(parsedOsu, parsedPackage, mainBpm)
 }
 
-export const calculateMainBpm = (controlPointGroup: ControlPointGroup[], lastTiming: number) => {
-	const bpmDurationList: { [bpm: number]: number } = {}
-	controlPointGroup.forEach((group, i) => {
-		group.controlPoints.forEach((point, j) => {
-			if (point instanceof TimingPoint) {
-				const bpm = point.bpm
-				const timing = point.startTime
-				const calBpm = round(bpm)
-				let duration = 0
-				if (i + 1 < controlPointGroup.length) {
-					controlPointGroup[i + 1].controlPoints.forEach((next, k) => {
-						if (next instanceof TimingPoint) {
-							let nextTiming = controlPointGroup[i + 1].controlPoints[k].startTime
-							duration = nextTiming - timing
-							return
-						}
-					})
-				} else {
-					duration = lastTiming - timing
-				}
-				if (bpmDurationList[calBpm]) {
-					// If BPM already exists, add duration
-					bpmDurationList[calBpm] += duration
-				} else {
-					bpmDurationList[calBpm] = duration
-				}
-			}
-		})
-	})
-
-	// Find the longest duration
-	let longestDuration = 0
-	let longestBpm: number = 0
-	for (const bpm in bpmDurationList) {
-		if (longestBpm === 0) {
-			longestBpm = Number(bpm)
-		}
-		if (bpmDurationList[bpm] > longestDuration) {
-			longestDuration = bpmDurationList[bpm]
-			longestBpm = Number(bpm)
-		}
-	}
-
-	return longestBpm
+export const parseOsuTextFile = async (data: string) => {
+	const decoder = new BeatmapDecoder()
+	const parsedOsu = decoder.decodeFromString(data)
+	return parsedOsu
 }

@@ -14,14 +14,15 @@
     "@ffmpeg/util": "^0.12.1",
     "@kionell/osu-pp-calculator": "^4.0.0",
     "@nuxt/ui": "^2.15.2",
+    "@zip.js/zip.js": "^2.7.43",
     "buffer": "^6.0.3",
     "fraction.js": "^4.3.7",
     "nuxt": "^3.11.2",
     "nuxt-security": "^1.3.2",
-    "osu-classes": "^3.0.1",
+    "osu-classes": "^3.0.2",
     "osu-mania-stable": "^5.0.0",
     "osu-parsers": "^4.1.6",
-    "vue": "^3.4.21",
-    "vue-router": "^4.3.0"
+    "vue": "^3.4.25",
+    "vue-router": "^4.3.2"
   }
 }

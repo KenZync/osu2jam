@@ -52,7 +52,7 @@ export const createOJN = (parsedOsu: Beatmap, parsedPackage: ojnPackage, mainBpm
 		cover_offset: 364
 	}
 
-	const packedDataT = new Uint8Array(2000000)
+	const packedDataT = new Uint8Array(100000000)
 	const dataView = new DataView(packedDataT.buffer)
 	let cursor = 0
 	dataView.setInt32(cursor, songData.songid, true)
@@ -120,6 +120,7 @@ export const createOJN = (parsedOsu: Beatmap, parsedPackage: ojnPackage, mainBpm
 	dataView.setInt16(cursor, songData.old_2, true)
 	cursor += 2
 	cursor += 20 // Assuming old_3 is a Buffer of length 0
+	let bmpSize = cursor
 	dataView.setInt32(cursor, songData.bmp_size, true)
 	cursor += 4
 	dataView.setInt32(cursor, songData.old_4, true)
@@ -153,6 +154,7 @@ export const createOJN = (parsedOsu: Beatmap, parsedPackage: ojnPackage, mainBpm
 	}
 	cursor += 32
 
+	let coverSize = cursor
 	dataView.setInt32(cursor, songData.cover_size, true)
 	cursor += 4
 
@@ -173,6 +175,7 @@ export const createOJN = (parsedOsu: Beatmap, parsedPackage: ojnPackage, mainBpm
 	cursor += 4
 
 	// Set cover offset
+	let coverOffset = cursor
 	dataView.setInt32(cursor, songData.cover_offset, true)
 	cursor += 4
 
@@ -220,9 +223,14 @@ export const createOJN = (parsedOsu: Beatmap, parsedPackage: ojnPackage, mainBpm
 		}
 	}
 
+	// dataView.buffer
+	// const newBuffer = new ArrayBuffer(cursor)
+	// const newIntArray = new Uint8Array(newBuffer)
+	// newIntArray.set(new Uint8Array(dataView.buffer)) // 1s
+
 	// Set the desired file name
 	const fileName = 'o2ma10000.ojn'
-	const blob = new Blob([dataView.buffer], { type: 'application/octet-stream' })
+	const blob = new Blob([dataView.buffer.slice(0, cursor)], { type: 'application/octet-stream' })
 	// Create an object URL for the blob
 	const url = URL.createObjectURL(blob)
 	// Create an anchor element to trigger the download
