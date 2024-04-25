@@ -1,7 +1,4 @@
-<
 <template>
-	<!-- <UButton color="pink" @click="parseOsuFile">Osu</UButton> -->
-
 	<DropZone class="drop-area text-center" @files-dropped="onInputChange" #default="{ dropZoneActive }">
 		<div class="flex items-center">
 			<label
@@ -32,7 +29,6 @@
 					class="absolute rounded-l-md h-[140px] max-w-[186px] min-w-[186px]"
 					:src="getImage(chart.folder_id, chart.beatmap.events.backgroundPath)"
 				/>
-				<!-- {{ chart.beatmap.general }} -->
 				<div class="h-[140px] min-w-[186px] z-10 flex flex-row-reverse">
 					<div class="pt-2 pr-2">
 						<UTooltip text="o2maID">
@@ -99,7 +95,6 @@
 				>
 					<UTooltip text="Edit (WIP)">
 						<UButton color="pink" variant="ghost" icon="i-heroicons-pencil-square-20-solid" />
-						<!-- @click="openOJNViewer(chart)" -->
 					</UTooltip>
 					<UTooltip text="Download">
 						<UButton color="pink" variant="ghost" icon="i-heroicons-arrow-down-tray" @click="parseOsuFile(chart)" />
@@ -195,7 +190,6 @@ const onInputChange = async (e: any) => {
 							files: [],
 							images: {}
 						}
-						// console.log('FOUND FOLDER')
 						oneFolder.name = file.name
 						Array.from(file.files).map((oneFile) => {
 							oneFolder.files.push(oneFile as File)
@@ -221,24 +215,10 @@ const onInputChange = async (e: any) => {
 						}
 					})
 					const parsedOsu = await parseOsuTextFile(osu)
-					// console.log(parsedOsu)
 					const ruleset = new ManiaRuleset()
 					if (parsedOsu.difficulty.circleSize === 7) {
 						const difficultyCalculator = ruleset.createDifficultyCalculator(parsedOsu)
 						const difficultyAttributes = difficultyCalculator.calculate()
-						// let metadata: Metadata = {
-						// 	title: parsedOsu.metadata.title,
-						// 	titleUnicode: parsedOsu.metadata.titleUnicode,
-						// 	artist: parsedOsu.metadata.artistUnicode,
-						// 	artistUnicode: parsedOsu.metadata.artist,
-						// 	difficulty: difficultyAttributes.starRating,
-						// 	creator: parsedOsu.metadata.creator,
-						// 	bpm: parsedOsu.bpm,
-						// 	version: parsedOsu.metadata.version,
-						// 	background: parsedOsu.events.backgroundPath,
-						// 	audioFilename: parsedOsu.general.audioFilename
-						// }
-
 						osuBeatmapList.value.push({
 							folder_id: folder.id,
 							beatmap: parsedOsu,
@@ -249,14 +229,9 @@ const onInputChange = async (e: any) => {
 				}
 				if (file.name.match(/\.png$|\.jpg$|\.jpeg$/i)) {
 					let base64 = await blobToBase64Async(file)
-					// file.name
-					// console.log('IMAGE', folder.id)
-					// folder.images.push()
-					// let newImage = { name: file.name, blob }
 
 					// Push the new image object into the images array
 					folderList.value[index].images[file.name] = 'data:image/png;base64,' + base64
-					// console.log
 				}
 			}
 		}
@@ -265,8 +240,4 @@ const onInputChange = async (e: any) => {
 	} finally {
 	}
 }
-
-// const downloadChart = (beatmap: BeatMapList) => {
-// 	console.log(beatmap)
-// }
 </script>
