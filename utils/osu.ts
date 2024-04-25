@@ -1,4 +1,4 @@
-import { ControlPointGroup, DifficultyPoint, HitObject, TimingPoint } from 'osu-classes'
+import { ControlPointGroup, DifficultyPoint, EffectPoint, HitObject, SamplePoint, TimingPoint } from 'osu-classes'
 import { BeatmapDecoder } from 'osu-parsers'
 
 const maxSub = 192
@@ -15,7 +15,7 @@ export const parseOsuFile = async (beatMapList: BeatMapList) => {
 	let sv: number = 1
 	let lastTiming = 0
 	// console.log(beatMapList.beatmap)
-	const firstTimingBpm = beatMapList.beatmap.controlPoints.groups[0].startTime
+	// const firstTimingBpm = beatMapList.beatmap.controlPoints.groups[0].startTime
 	// const firstTimingNote = parsedOsu.controlPoints.groups[0].startTime
 
 	// Control points
@@ -38,7 +38,7 @@ export const parseOsuFile = async (beatMapList: BeatMapList) => {
 	const mainBpm = round(beatMapList.beatmap.bpm)
 	const mainBeatLength = calculateBeatLength(mainBpm)
 
-	const appendOffset = mainBeatLength * 4 - firstTimingBpm
+	// const appendOffset = mainBeatLength * 4 - firstTimingBpm
 
 	const beatObject: BeatObject[] = []
 
@@ -49,27 +49,35 @@ export const parseOsuFile = async (beatMapList: BeatMapList) => {
 	let nowMeasure: number = 0
 	let nowSub = 0
 	let bpm = -1
-	let timingPoint = []
+	// let timingPoint = []
+	// console.log(beatMapList.beatmap)
 	beatMapList.beatmap.controlPoints.groups.forEach((group: { controlPoints: ControlPointGroup[] }, i: number) => {
 		let duration = 0
 		// bpm = -1
+		let found = false
 		group.controlPoints.forEach((point, j: number) => {
 			if (point instanceof TimingPoint) {
 				bpm = point.bpm
 
 				timing = point.startTime
+				found = true
 			}
 			if (point instanceof DifficultyPoint) {
 				sv = point.sliderVelocity
 				timing = point.startTime
+				found = true
 			}
 		})
+		if (!found) {
+			return
+		}
 
 		const nowBpm = round(bpm * sv)
 		sv = 1
 		const nowBeatLength = calculateBeatLength(nowBpm)
 
 		duration = timing - prevTiming
+		// console.log(group, nowBpm, nowBeatLength, 'sv', sv, 't', timing, 'p', prevTiming)
 		const relativeMeasureLength = calculateMeasure(duration, prevBeatLength)
 
 		nowMeasure = nowMeasure + relativeMeasureLength
@@ -103,6 +111,8 @@ export const parseOsuFile = async (beatMapList: BeatMapList) => {
 
 		parsedPackage[measureDigit][1].Events.push(event)
 	})
+	// console.log(beatObject)
+	// console.log(parsedPackage)
 
 	// TODO MAKE IT BETTER
 	if (beatObject[0].offset !== 0) {
