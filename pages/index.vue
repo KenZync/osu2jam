@@ -15,7 +15,7 @@
 				<span v-else>
 					<div>Drag & Drop</div>
 					<span>
-						.osz files here or osu song folder or
+						osu! song folder or .osz files here or
 						<span class="font-bold italic">click</span>
 					</span>
 				</span>
