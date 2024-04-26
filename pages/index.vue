@@ -114,6 +114,11 @@
 import { BlobReader, BlobWriter, ZipReader } from '@zip.js/zip.js'
 import { ManiaRuleset } from 'osu-mania-stable'
 
+useHead({
+	title: 'Osu2Jam',
+	meta: [{ name: 'description', content: 'Osu to O2Jam Converter' }]
+})
+
 const osuBeatmapList = ref<BeatMapList[]>([])
 const folderList = ref<Folder[]>([])
 
