@@ -27,7 +27,7 @@
 			<div class="flex relative">
 				<img
 					class="absolute rounded-l-md h-[140px] max-w-[186px] min-w-[186px]"
-					:src="getImage(chart.folder_id, chart.beatmap.events.backgroundPath)"
+					:src="getImage(chart.folder_id, chart.beatmap.events.backgroundPath || '')"
 				/>
 				<div class="h-[140px] min-w-[186px] z-10 flex flex-row-reverse">
 					<div class="pt-2 pr-2">
@@ -45,7 +45,7 @@
 				<div class="flex relative w-full bg-gradient-to-r from-gray-900 rounded-md -ml-1">
 					<img
 						class="absolute object-cover w-full h-[140px] opacity-10 rounded-md"
-						:src="getImage(chart.folder_id, chart.beatmap.events.backgroundPath)"
+						:src="getImage(chart.folder_id, chart.beatmap.events.backgroundPath || '')"
 					/>
 					<div class="flex flex-col justify-between w-full relative p-2">
 						<div class="z-10">
@@ -97,7 +97,12 @@
 						<UButton color="pink" variant="ghost" icon="i-heroicons-pencil-square-20-solid" />
 					</UTooltip>
 					<UTooltip text="Download">
-						<UButton color="pink" variant="ghost" icon="i-heroicons-arrow-down-tray" @click="parseOsuFile(chart)" />
+						<UButton
+							color="pink"
+							variant="ghost"
+							icon="i-heroicons-arrow-down-tray"
+							@click="parseOsuFile(chart as BeatMapList)"
+						/>
 					</UTooltip>
 				</div>
 			</div>
