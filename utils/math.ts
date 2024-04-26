@@ -43,5 +43,9 @@ export function calculateBeatLength(bpm: number) {
 	return parseFloat((60000 / bpm).toFixed(12))
 }
 
+export function calculateBpm(beatLength: number) {
+	return 60000 / beatLength
+}
+
 export const gcd: (a: number, b: number) => number = (a, b) => (a ? gcd(b % a, a) : b)
 export const lcm = (a: number, b: number): number => (a * b) / gcd(a, b)

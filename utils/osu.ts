@@ -1,4 +1,4 @@
-import { ControlPointGroup, DifficultyPoint, EffectPoint, HitObject, SamplePoint, TimingPoint } from 'osu-classes'
+import { HitObject, TimingPoint } from 'osu-classes'
 import { BeatmapDecoder } from 'osu-parsers'
 
 const maxSub = 192
@@ -6,12 +6,8 @@ const maxSub = 192
 export const parseOsuFile = async (beatMapList: BeatMapList) => {
 	const parsedPackage: ojnPackage = {}
 
-	let timing: number
-	let sv: number = 1
 	let lastTiming = 0
-	// console.log(beatMapList.beatmap)
 	let firstTimingBpm = 0
-	// let foundFirstTiming = false
 	const firstTimingNote = beatMapList.beatmap.controlPoints.groups[0].startTime
 	outerLoop: for (const group of beatMapList.beatmap.controlPoints.groups) {
 		for (const point of group.controlPoints) {
@@ -21,7 +17,7 @@ export const parseOsuFile = async (beatMapList: BeatMapList) => {
 			}
 		}
 	}
-	// console.log(firstTimingBpm)
+
 	// Control points
 	if (beatMapList.beatmap.controlPoints.groups.length > 0) {
 		const lastControlPoint =
@@ -44,10 +40,9 @@ export const parseOsuFile = async (beatMapList: BeatMapList) => {
 
 	let appendOffset = mainBeatLength * 4 - firstTimingBpm
 
-	// while (firstTimingNote + appendOffset <= 1000) {
-	// 	appendOffset = appendOffset + mainBeatLength * 4
-	// }
-	// console.log(appendOffset)
+	while (firstTimingNote + appendOffset <= 1000) {
+		appendOffset = appendOffset + mainBeatLength * 4
+	}
 
 	const beatObject: BeatObject[] = []
 
@@ -57,43 +52,33 @@ export const parseOsuFile = async (beatMapList: BeatMapList) => {
 	let measureDigit = 0
 	let nowMeasure: number = 0
 	let nowSub = 0
-	let bpm = -1
-	// let timingPoint = []
-	// console.log(beatMapList.beatmap)
-	beatMapList.beatmap.controlPoints.groups.forEach((group: { controlPoints: ControlPointGroup[] }, i: number) => {
-		let duration = 0
-		// bpm = -1
-		let found = false
-		group.controlPoints.forEach((point, j: number) => {
-			if (point instanceof TimingPoint) {
-				bpm = point.bpm
 
-				timing = point.startTime + appendOffset
-				found = true
-			}
-			if (point instanceof DifficultyPoint) {
-				sv = point.sliderVelocity
-				timing = point.startTime + appendOffset
-				found = true
-			}
-		})
-		if (!found) {
-			return
+	const newTiming = beatMapList.beatmap.controlPoints.groups.map((group) => {
+		const timingPoint = beatMapList.beatmap.controlPoints.timingPointAt(group.startTime)
+		const difficultyPoint = beatMapList.beatmap.controlPoints.difficultyPointAt(group.startTime)
+
+		let calBpm = timingPoint.bpm * difficultyPoint.sliderVelocity
+
+		if (calBpm <= mainBpm / 3) {
+			calBpm = mainBpm / 3
 		}
 
-		const nowBpm = round(bpm * sv)
-		sv = 1
-		const nowBeatLength = calculateBeatLength(nowBpm)
+		return {
+			offset: Math.max(timingPoint.startTime, difficultyPoint.startTime) + appendOffset,
+			bpm: calBpm
+		}
+	})
+	newTiming.forEach((timing) => {
+		const nowBeatLength = calculateBeatLength(timing.bpm)
 
-		duration = timing - prevTiming
-		// console.log(group, nowBpm, nowBeatLength, 'sv', sv, 't', timing, 'p', prevTiming)
+		let duration = timing.offset - prevTiming
 		const relativeMeasureLength = calculateMeasure(duration, prevBeatLength)
 
 		nowMeasure = nowMeasure + relativeMeasureLength
 		measureDigit = calculateMeasureDigit(nowMeasure)
 		nowSub = calculateSubmeasure(nowMeasure, maxSub)
 		prevBeatLength = nowBeatLength
-		prevTiming = timing
+		prevTiming = timing.offset
 
 		if (!parsedPackage[measureDigit]) {
 			parsedPackage[measureDigit] = {
@@ -106,22 +91,20 @@ export const parseOsuFile = async (beatMapList: BeatMapList) => {
 
 		const event: O2Event = {
 			type: 'bpm',
-			value: nowBpm,
+			value: timing.bpm,
 			sub: nowSub
 		}
 
 		beatObject.push({
-			offset: timing,
+			offset: timing.offset,
 			beatLength: nowBeatLength,
-			bpm: nowBpm,
+			bpm: timing.bpm,
 			measure: nowMeasure,
 			sub: nowSub
 		})
 
 		parsedPackage[measureDigit][1].Events.push(event)
 	})
-	// console.log(beatObject)
-	// console.log(parsedPackage)
 
 	// TODO MAKE IT BETTER
 	if (beatObject[0].offset !== 0) {
@@ -265,7 +248,7 @@ export const parseOsuFile = async (beatMapList: BeatMapList) => {
 		// Iterating over channels in a measure
 		for (const channel in channels) {
 			const { maxSub, Events } = channels[channel]
-			const numbers: number[] = [192]
+			const numbers: number[] = [maxSub]
 			for (const event of Events) {
 				// if (event.sub !== 0) {
 				numbers.push(event.sub)
@@ -287,7 +270,6 @@ export const parseOsuFile = async (beatMapList: BeatMapList) => {
 			newMaxSubArray.forEach((padding) => {
 				let paddingNote: O2Event = {
 					type: 'padding',
-					// type: 'bpm',
 					value: 0,
 					sub: padding
 				}
@@ -296,7 +278,6 @@ export const parseOsuFile = async (beatMapList: BeatMapList) => {
 			parsedPackage[measure][channel].Events.sort((a, b) => a.sub - b.sub)
 		}
 	}
-	// console.log(parsedPackage)
 	createOJN(beatMapList.beatmap, parsedPackage, mainBpm)
 }
 
