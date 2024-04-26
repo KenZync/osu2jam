@@ -52,7 +52,18 @@ export const createOJN = (parsedOsu: Beatmap, parsedPackage: ojnPackage, mainBpm
 		cover_offset: 364
 	}
 
-	const packedDataT = new Uint8Array(100000000)
+	let size = 300
+
+	for (const measure in parsedPackage) {
+		for (const channel in parsedPackage[measure]) {
+			size += 8
+			for (const event in parsedPackage[measure][channel].Events) {
+				size += 4
+			}
+		}
+	}
+
+	const packedDataT = new Uint8Array(size)
 	const dataView = new DataView(packedDataT.buffer)
 	let cursor = 0
 	dataView.setInt32(cursor, songData.songid, true)
@@ -230,7 +241,9 @@ export const createOJN = (parsedOsu: Beatmap, parsedPackage: ojnPackage, mainBpm
 
 	// Set the desired file name
 	const fileName = 'o2ma10000.ojn'
-	const blob = new Blob([dataView.buffer.slice(0, cursor)], { type: 'application/octet-stream' })
+	// const blob = new Blob([dataView.buffer.slice(0, cursor)], { type: 'application/octet-stream' })
+	const blob = new Blob([dataView.buffer], { type: 'application/octet-stream' })
+
 	// Create an object URL for the blob
 	const url = URL.createObjectURL(blob)
 	// Create an anchor element to trigger the download
