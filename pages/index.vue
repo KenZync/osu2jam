@@ -36,7 +36,7 @@
 								color="white"
 								class="opacity-70 hover:opacity-100 transition"
 								size="xs"
-								:label="chart.beatmap.metadata.beatmapId"
+								:label="Math.floor(chart.beatmap.metadata.beatmapId / 1000)"
 							/>
 						</UTooltip>
 					</div>
@@ -101,15 +101,16 @@
 							color="pink"
 							variant="ghost"
 							icon="i-heroicons-arrow-down-tray"
-							@click="
-								parseOsuFile(chart as BeatMapList, getImage(chart.folder_id, chart.beatmap.events.backgroundPath || ''))
-							"
+							@click="convert(chart as BeatMapList)"
 						/>
 					</UTooltip>
 				</div>
 			</div>
 		</UCard>
 	</div>
+	<UModal v-model="convertOJN" :prevent-close="convertOJN">
+		<ConverterModal :id="beatmapId" :music="musicFile!" :append="appendOffset" @done="weDone" />
+	</UModal>
 </template>
 
 <script setup lang="ts">
@@ -121,8 +122,15 @@ useHead({
 	meta: [{ name: 'description', content: 'Osu to O2Jam Converter' }]
 })
 
+const convertOJN = ref(false)
+// const convertOJN = ref(false)
+
 const osuBeatmapList = ref<BeatMapList[]>([])
 const folderList = ref<Folder[]>([])
+
+const musicFile = ref<File>()
+const appendOffset = ref(0)
+const beatmapId = ref(1)
 
 const getImage = (folderId: number, imageName: string) => {
 	const folder = folderList.value.find((folder) => folder.id === folderId)
@@ -139,6 +147,25 @@ const getImage = (folderId: number, imageName: string) => {
 	// You can perform additional operations here, like loading the image
 	// For now, just return the imagePath
 	return imagePath
+}
+
+const getMusic = (folderId: number, musicName: string) => {
+	const folder = folderList.value.find((folder) => folder.id === folderId)
+	// if (!folder) {
+	// 	return new File([])
+	// }
+
+	return folder?.files.find((file) => file.name === musicName)
+
+	// Check if the specified imageName exists in the folder's images
+	// const imagePath = folder.images[imageName]
+	// if (!imagePath) {
+	// 	return ''
+	// }
+
+	// You can perform additional operations here, like loading the image
+	// For now, just return the imagePath
+	// return imagePath
 }
 
 const onInputChange = async (e: any) => {
@@ -252,4 +279,24 @@ const onInputChange = async (e: any) => {
 	} finally {
 	}
 }
+
+const convert = async (chart: BeatMapList) => {
+	beatmapId.value = Math.floor(chart.beatmap.metadata.beatmapId / 1000)
+	let append = await parseOsuFile(
+		chart as BeatMapList,
+		getImage(chart.folder_id, chart.beatmap.events.backgroundPath || '')
+	)
+	// parseMusicFile()
+	musicFile.value = getMusic(chart.folder_id, chart.beatmap.general.audioFilename)
+	convertOJN.value = true
+	appendOffset.value = append
+}
+
+const weDone = () => {
+	convertOJN.value = false
+}
+
+// const parseMusicFile = () => {
+// 	getMusic()
+// }
 </script>
