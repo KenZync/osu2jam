@@ -1,6 +1,7 @@
 <template>
 	<UCard>
 		<template #header> Converting OJM </template>
+		<div class="pb-2">{{ message }} {{ elapse }}</div>
 		<UProgress :value="percent" indicator />
 	</UCard>
 </template>
@@ -16,6 +17,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits(['done'])
+// const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm'
 const baseURL = 'https://unpkg.com/@ffmpeg/core-mt@0.12.6/dist/esm'
 
 onMounted(async () => {
@@ -34,8 +36,10 @@ const percent = ref(0)
 const elapse = ref(0)
 
 async function transcode(music: File) {
+	// message.value = 'Start Transocding'
 	const newOggFileName = music.name + '.ogg'
 	const ffmpeg = new FFmpeg()
+	// message.value = 'ffmpeg Created'
 	ffmpeg.on('progress', ({ progress, time }) => {
 		percent.value = progress * 100
 		elapse.value = time
@@ -45,10 +49,11 @@ async function transcode(music: File) {
 		wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'applicaiton/wasm'),
 		workerURL: await toBlobURL(`${baseURL}/ffmpeg-core.worker.js`, 'text/javascript')
 	})
-	message.value = 'Converting OJM'
+	// message.value = 'ffmpeg Loaded'
 	let arrayBuffer = await music?.arrayBuffer()
 	const uInt8Array = new Uint8Array(arrayBuffer as ArrayBuffer)
 	await ffmpeg.writeFile(music.name, uInt8Array)
+	// message.value = `${music.name} writed`
 
 	const command = ['-i', music.name]
 	if (props.append > 0) {
@@ -59,12 +64,14 @@ async function transcode(music: File) {
 		// Seek to append amount
 		command.push('-ss', Math.abs(props.append / 1000).toString())
 	}
-	command.push('-c:a', 'libvorbis', newOggFileName)
-	console.log(command)
+	command.push('-vn', '-c:a', 'libvorbis', newOggFileName)
+	// console.log(command)
+	// message.value = `Executing Command: ${command}`
 	await ffmpeg.exec(command)
 
-	message.value = 'OJM is Done'
+	// message.value = 'OJM is Done'
 	const data = (await ffmpeg.readFile(newOggFileName)) as Uint8Array
+	window.open(URL.createObjectURL(new Blob([(data as Uint8Array).buffer], { type: 'audio/ogg' })))
 	return { name: newOggFileName, data }
 }
 </script>
