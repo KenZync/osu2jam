@@ -32,7 +32,7 @@ export function calculateSubmeasure(measure: number, maxSub: number) {
 }
 
 export function calculateMeasureDigit(measure: number) {
-	return Math.floor(round(measure))
+	return Math.floor(measure)
 }
 
 export function calculateMeasure(timing: number, beatLength: number) {
