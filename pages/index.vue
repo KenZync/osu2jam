@@ -50,12 +50,9 @@
 					<div class="flex flex-col justify-between w-full relative p-2">
 						<div class="z-10">
 							<div class="font-bold">
-								{{ chart.beatmap.metadata.titleUnicode }}
+								{{ chart.beatmap.metadata.title }}
 							</div>
-							<div class="font-bold text-sm">by {{ chart.beatmap.metadata.artistUnicode }}</div>
-						</div>
-						<div class="text-sm text-gray-300">
-							{{ chart.beatmap.metadata.version }}
+							<div class="font-bold text-sm">by {{ chart.beatmap.metadata.artist }}</div>
 						</div>
 						<div class="z-10">
 							<div class="leading-none text-sm">
@@ -78,12 +75,15 @@
 							</div>
 							<div class="flex justify-between pt-1">
 								<UTooltip text="Mode">
-									<UBadge color="pink" label="osu!mania 7K" />
+									<UBadge color="pink" label="7K" />
 								</UTooltip>
 
 								<div class="flex gap-1">
+									<UTooltip text="Difficulty">
+										<UBadge class="break-all" color="yellow" :label="chart.beatmap.metadata.version" />
+									</UTooltip>
 									<UTooltip text="Level Hard / HX">
-										<UBadge color="red" :label="Math.round(chart.stars * 10)" />
+										<UBadge :color="getColor(Math.round(chart.stars * 10))" :label="Math.round(chart.stars * 10)" />
 									</UTooltip>
 								</div>
 							</div>
@@ -123,7 +123,6 @@ useHead({
 })
 
 const convertOJN = ref(false)
-// const convertOJN = ref(false)
 
 const osuBeatmapList = ref<BeatMapList[]>([])
 const folderList = ref<Folder[]>([])
@@ -131,6 +130,40 @@ const folderList = ref<Folder[]>([])
 const musicFile = ref<File>()
 const appendOffset = ref(0)
 const beatmapId = ref(1)
+
+const getColor = (level: number) => {
+	if (level > 140) {
+		return 'purple'
+	} else if (level > 130) {
+		return 'fuchsia'
+	} else if (level > 120) {
+		return 'pink'
+	} else if (level > 110) {
+		return 'rose'
+	} else if (level > 100) {
+		return 'red'
+	} else if (level > 90) {
+		return 'orange'
+	} else if (level > 80) {
+		return 'amber'
+	} else if (level > 70) {
+		return 'yellow'
+	} else if (level > 60) {
+		return 'blue'
+	} else if (level > 50) {
+		return 'cyan'
+	} else if (level > 40) {
+		return 'teal'
+	} else if (level > 30) {
+		return 'emerald'
+	} else if (level > 20) {
+		return 'green'
+	} else if (level > 10) {
+		return 'lime'
+	} else {
+		return 'gray'
+	}
+}
 
 const getImage = (folderId: number, imageName: string) => {
 	const folder = folderList.value.find((folder) => folder.id === folderId)
@@ -151,21 +184,7 @@ const getImage = (folderId: number, imageName: string) => {
 
 const getMusic = (folderId: number, musicName: string) => {
 	const folder = folderList.value.find((folder) => folder.id === folderId)
-	// if (!folder) {
-	// 	return new File([])
-	// }
-
 	return folder?.files.find((file) => file.name === musicName)
-
-	// Check if the specified imageName exists in the folder's images
-	// const imagePath = folder.images[imageName]
-	// if (!imagePath) {
-	// 	return ''
-	// }
-
-	// You can perform additional operations here, like loading the image
-	// For now, just return the imagePath
-	// return imagePath
 }
 
 const onInputChange = async (e: any) => {
@@ -286,7 +305,6 @@ const convert = async (chart: BeatMapList) => {
 		chart as BeatMapList,
 		getImage(chart.folder_id, chart.beatmap.events.backgroundPath || '')
 	)
-	// parseMusicFile()
 	musicFile.value = getMusic(chart.folder_id, chart.beatmap.general.audioFilename)
 	convertOJN.value = true
 	appendOffset.value = append
@@ -295,8 +313,4 @@ const convert = async (chart: BeatMapList) => {
 const weDone = () => {
 	convertOJN.value = false
 }
-
-// const parseMusicFile = () => {
-// 	getMusic()
-// }
 </script>
