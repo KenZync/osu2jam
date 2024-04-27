@@ -2,7 +2,10 @@ import { type Beatmap } from 'osu-classes'
 import { ManiaRuleset } from 'osu-mania-stable'
 import { Buffer } from 'buffer'
 
-export const createOJN = (parsedOsu: Beatmap, parsedPackage: ojnPackage, mainBpm: number) => {
+export const createOJN = (parsedOsu: Beatmap, parsedPackage: ojnPackage, mainBpm: number, base64Image: string) => {
+	const cover = resizeImage(base64Image, 800, 600, 'jpeg')
+	const bmp = resizeImage(base64Image, 80, 80, 'bmp')
+
 	const ruleset = new ManiaRuleset()
 	// console.log(parsedOsu)
 	const difficultyCalculator = ruleset.createDifficultyCalculator(parsedOsu)
@@ -36,20 +39,20 @@ export const createOJN = (parsedOsu: Beatmap, parsedPackage: ojnPackage, mainBpm
 		old_1: 0,
 		old_2: 0,
 		old_3: Buffer.from(''),
-		bmp_size: 19254,
+		bmp_size: bmp.byteLength,
 		old_4: 0,
 		title: Buffer.from(parsedOsu.metadata.title),
 		artist: Buffer.from(parsedOsu.metadata.artist),
 		noter: Buffer.from(parsedOsu.metadata.creator),
 		ojm_file: Buffer.from(`o2ma${songID}.ojm`),
-		cover_size: 112060,
-		time_ex: 4,
-		time_nx: 4,
-		time_hx: 4,
+		cover_size: cover.byteLength,
+		time_ex: Math.floor(parsedOsu.length / 1000),
+		time_nx: Math.floor(parsedOsu.length / 1000),
+		time_hx: Math.floor(parsedOsu.length / 1000),
 		note_ex: 300,
 		note_nx: 300,
 		note_hx: 300,
-		cover_offset: 364
+		cover_offset: 0
 	}
 
 	let size = 300
@@ -62,6 +65,8 @@ export const createOJN = (parsedOsu: Beatmap, parsedPackage: ojnPackage, mainBpm
 			}
 		}
 	}
+
+	songData.cover_offset = size
 
 	const packedDataT = new Uint8Array(size)
 	const dataView = new DataView(packedDataT.buffer)
@@ -131,7 +136,6 @@ export const createOJN = (parsedOsu: Beatmap, parsedPackage: ojnPackage, mainBpm
 	dataView.setInt16(cursor, songData.old_2, true)
 	cursor += 2
 	cursor += 20 // Assuming old_3 is a Buffer of length 0
-	let bmpSize = cursor
 	dataView.setInt32(cursor, songData.bmp_size, true)
 	cursor += 4
 	dataView.setInt32(cursor, songData.old_4, true)
@@ -165,7 +169,6 @@ export const createOJN = (parsedOsu: Beatmap, parsedPackage: ojnPackage, mainBpm
 	}
 	cursor += 32
 
-	let coverSize = cursor
 	dataView.setInt32(cursor, songData.cover_size, true)
 	cursor += 4
 
@@ -186,9 +189,10 @@ export const createOJN = (parsedOsu: Beatmap, parsedPackage: ojnPackage, mainBpm
 	cursor += 4
 
 	// Set cover offset
-	let coverOffset = cursor
 	dataView.setInt32(cursor, songData.cover_offset, true)
 	cursor += 4
+
+	console.log(cursor)
 
 	for (const measure in parsedPackage) {
 		for (const channel in parsedPackage[measure]) {
@@ -234,16 +238,10 @@ export const createOJN = (parsedOsu: Beatmap, parsedPackage: ojnPackage, mainBpm
 		}
 	}
 
-	// dataView.buffer
-	// const newBuffer = new ArrayBuffer(cursor)
-	// const newIntArray = new Uint8Array(newBuffer)
-	// newIntArray.set(new Uint8Array(dataView.buffer)) // 1s
-
 	// Set the desired file name
 	const fileName = 'o2ma10000.ojn'
 	// const blob = new Blob([dataView.buffer.slice(0, cursor)], { type: 'application/octet-stream' })
-	const blob = new Blob([dataView.buffer], { type: 'application/octet-stream' })
-
+	const blob = new Blob([dataView.buffer, cover, bmp], { type: 'application/octet-stream' })
 	// Create an object URL for the blob
 	const url = URL.createObjectURL(blob)
 	// Create an anchor element to trigger the download

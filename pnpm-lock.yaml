@@ -23,6 +23,9 @@ importers:
       '@zip.js/zip.js':
         specifier: ^2.7.43
         version: 2.7.43
+      binary-bmp:
+        specifier: ^1.2.0
+        version: 1.2.0
       buffer:
         specifier: ^6.0.3
         version: 6.0.3
@@ -1372,6 +1375,9 @@ packages:
   basic-auth@2.0.1:
     resolution: {integrity: sha512-NF+epuEdnUYVlGuhaxbbq+dvJttwLnGY+YixlXlME5KpQ5W3CnXA5cVTneY3SPbPDRkcjMbifrwmFYcClgOZeg==}
     engines: {node: '>= 0.8'}
+
+  binary-bmp@1.2.0:
+    resolution: {integrity: sha512-XykFR+o+wW1DENYxH4KrK7XhyqbrlBVFVK2Zw1DCT3eO6fYzXS+0p2OSASOr9M97SUrzUILoWOwcpv10I38mGQ==}
 
   binary-extensions@2.3.0:
     resolution: {integrity: sha512-Ceh+7ox5qe7LJuLHoY0feh3pHuUDHAcRUeyL2VYghZwfpkNIy/+8Ocg0a3UuSoYzavmylwuLWQOf3hl0jjMMIw==}
@@ -5786,6 +5792,8 @@ snapshots:
   basic-auth@2.0.1:
     dependencies:
       safe-buffer: 5.1.2
+
+  binary-bmp@1.2.0: {}
 
   binary-extensions@2.3.0: {}
 

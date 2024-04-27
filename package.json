@@ -15,6 +15,7 @@
     "@kionell/osu-pp-calculator": "^4.0.0",
     "@nuxt/ui": "^2.15.2",
     "@zip.js/zip.js": "^2.7.43",
+    "binary-bmp": "^1.2.0",
     "buffer": "^6.0.3",
     "fraction.js": "^4.3.7",
     "nuxt": "^3.11.2",

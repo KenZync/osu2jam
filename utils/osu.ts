@@ -3,7 +3,7 @@ import { BeatmapDecoder } from 'osu-parsers'
 
 const maxSub = 192
 
-export const parseOsuFile = async (beatMapList: BeatMapList) => {
+export const parseOsuFile = async (beatMapList: BeatMapList, base64Image: string) => {
 	const parsedPackage: ojnPackage = {}
 
 	let lastTiming = 0
@@ -278,7 +278,7 @@ export const parseOsuFile = async (beatMapList: BeatMapList) => {
 			parsedPackage[measure][channel].Events.sort((a, b) => a.sub - b.sub)
 		}
 	}
-	createOJN(beatMapList.beatmap, parsedPackage, mainBpm)
+	createOJN(beatMapList.beatmap, parsedPackage, mainBpm, base64Image)
 }
 
 export const parseOsuTextFile = async (data: string) => {

@@ -101,7 +101,9 @@
 							color="pink"
 							variant="ghost"
 							icon="i-heroicons-arrow-down-tray"
-							@click="parseOsuFile(chart as BeatMapList)"
+							@click="
+								parseOsuFile(chart as BeatMapList, getImage(chart.folder_id, chart.beatmap.events.backgroundPath || ''))
+							"
 						/>
 					</UTooltip>
 				</div>
