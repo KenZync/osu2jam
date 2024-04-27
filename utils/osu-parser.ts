@@ -86,7 +86,20 @@ export const parseOsuFile = async (beatMapList: BeatMapList, base64Image: string
 			bpm: calBpm
 		}
 	})
-	newTiming.forEach((timing) => {
+	interface TimingPoint {
+		offset: number
+		bpm: number
+	}
+
+	const uniqueTiming: TimingPoint[] = newTiming.reduce((acc: TimingPoint[], current: TimingPoint) => {
+		const duplicate = acc.find((item) => item.offset === current.offset && item.bpm === current.bpm)
+		if (!duplicate) {
+			acc.push(current)
+		}
+		return acc
+	}, [])
+
+	uniqueTiming.forEach((timing) => {
 		const nowBeatLength = calculateBeatLength(timing.bpm)
 
 		let duration = timing.offset - prevTiming
@@ -206,7 +219,7 @@ export const parseOsuFile = async (beatMapList: BeatMapList, base64Image: string
 		}
 
 		if (note.hitType === 128) {
-			let startLNEvent: O2Event = {
+			const startLNEvent: O2Event = {
 				type: 'note',
 				value: 1,
 				volume: 0,
@@ -238,7 +251,7 @@ export const parseOsuFile = async (beatMapList: BeatMapList, base64Image: string
 			endNowSub = calculateSubmeasure(endMeasure, maxSub)
 			endMeasureDigit = calculateMeasureDigit(endMeasure)
 
-			let endLNEvent: O2Event = {
+			const endLNEvent: O2Event = {
 				type: 'note',
 				value: 1,
 				volume: 0,
@@ -262,7 +275,6 @@ export const parseOsuFile = async (beatMapList: BeatMapList, base64Image: string
 					Events: []
 				}
 			}
-
 			parsedPackage[endMeasureDigit][key].Events.push(endLNEvent)
 		}
 	})
