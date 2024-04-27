@@ -1,6 +1,7 @@
 <template>
 	<UCard>
-		{{ message }}
+		<template #header> Converting OJM </template>
+		<UProgress :value="percent" indicator />
 	</UCard>
 </template>
 
@@ -29,10 +30,16 @@ interface OJM {
 }
 
 const message = ref('Converting OJM')
+const percent = ref(0)
+const elapse = ref(0)
 
 async function transcode(music: File) {
 	const newOggFileName = music.name + '.ogg'
 	const ffmpeg = new FFmpeg()
+	ffmpeg.on('progress', ({ progress, time }) => {
+		percent.value = progress * 100
+		elapse.value = time
+	})
 	await ffmpeg.load({
 		coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
 		wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'applicaiton/wasm'),
