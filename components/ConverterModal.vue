@@ -60,7 +60,7 @@ async function transcode(music: File) {
 	command.push('-vn', '-c:a', 'libvorbis', newOggFileName)
 	await ffmpeg.exec(command)
 	const data = (await ffmpeg.readFile(newOggFileName)) as Uint8Array
-	window.open(URL.createObjectURL(new Blob([(data as Uint8Array).buffer], { type: 'audio/ogg' })))
+	// window.open(URL.createObjectURL(new Blob([(data as Uint8Array).buffer], { type: 'audio/ogg' })))
 	return { name: newOggFileName, data }
 }
 </script>

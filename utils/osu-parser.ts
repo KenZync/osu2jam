@@ -314,6 +314,29 @@ export const parseOsuFile = async (beatMapList: BeatMapList, base64Image: string
 			parsedPackage[measure][channel].Events.sort((a, b) => a.sub - b.sub)
 		}
 	}
+
+	const measureNumbers = Object.keys(parsedPackage)
+	const lastMeasureNumber = measureNumbers.length > 0 ? parseInt(measureNumbers[measureNumbers.length - 1]) : 0
+
+	// Increment the last measure number by 1
+	const newLastMeasure = lastMeasureNumber + 1
+
+	const event: O2Event = {
+		type: 'bpm',
+		value: mainBpm,
+		sub: 0
+	}
+
+	// Create the new measure with channel 1
+	const lastMeasure = {
+		'1': {
+			maxSub: 1,
+			Events: [event]
+		}
+	}
+
+	parsedPackage[newLastMeasure.toString()] = lastMeasure
+
 	createOJN(beatMapList.beatmap, parsedPackage, mainBpm, base64Image)
 	return appendOffset - mainBeatLength * 2
 }
