@@ -45,7 +45,6 @@ async function transcode(music: File) {
 
 	const command = ['-i', music.name]
 	if (props.append > 0) {
-		command.push('-i', music.name)
 		// Add silence for append amount
 		command.push('-af', `adelay=${props.append}|${props.append}`)
 		// command.push('-af', `adelay=10000|10000`)
@@ -54,6 +53,7 @@ async function transcode(music: File) {
 		command.push('-ss', Math.abs(props.append / 1000).toString())
 	}
 	command.push('-c:a', 'libvorbis', newOggFileName)
+	console.log(command)
 	await ffmpeg.exec(command)
 
 	message.value = 'OJM is Done'
