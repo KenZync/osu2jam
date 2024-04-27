@@ -28,7 +28,7 @@ export function findGCD(arr: number[]) {
 }
 
 export function calculateSubmeasure(measure: number, maxSub: number) {
-	return Math.round(measure * maxSub) % maxSub
+	return Math.floor((measure * maxSub) % maxSub)
 }
 
 export function calculateMeasureDigit(measure: number) {
@@ -36,7 +36,7 @@ export function calculateMeasureDigit(measure: number) {
 }
 
 export function calculateMeasure(timing: number, beatLength: number) {
-	return timing / (beatLength * 4)
+	return round(timing / (beatLength * 4))
 }
 
 export function calculateBeatLength(bpm: number) {
