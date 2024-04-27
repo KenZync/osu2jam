@@ -28,15 +28,33 @@ export function findGCD(arr: number[]) {
 }
 
 export function calculateSubmeasure(measure: number, maxSub: number) {
-	return Math.floor((measure * maxSub) % maxSub)
+	let firstMultiplay = measure * maxSub
+	let divide = firstMultiplay / maxSub
+	let quotient = Math.floor(divide)
+	let multiply = quotient * maxSub
+	let remainer = firstMultiplay - multiply
+
+	if (Math.round(remainer) === maxSub) {
+		remainer = 0
+	}
+
+	return Math.round(remainer)
 }
 
-export function calculateMeasureDigit(measure: number) {
-	return Math.floor(measure)
+export function calculateMeasureDigit(measure: number, maxSub: number) {
+	let firstMultiplay = measure * maxSub
+	let divide = firstMultiplay / maxSub
+	let quotient = Math.floor(divide)
+	let multiply = quotient * maxSub
+	let remainer = firstMultiplay - multiply
+	if (Math.round(remainer) === maxSub) {
+		quotient++
+	}
+	return quotient
 }
 
 export function calculateMeasure(timing: number, beatLength: number) {
-	return round(timing / (beatLength * 4))
+	return timing / (beatLength * 4)
 }
 
 export function calculateBeatLength(bpm: number) {

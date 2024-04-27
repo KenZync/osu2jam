@@ -106,7 +106,7 @@ export const parseOsuFile = async (beatMapList: BeatMapList, base64Image: string
 		const relativeMeasureLength = calculateMeasure(duration, prevBeatLength)
 
 		nowMeasure = nowMeasure + relativeMeasureLength
-		measureDigit = calculateMeasureDigit(nowMeasure)
+		measureDigit = calculateMeasureDigit(nowMeasure, maxSub)
 		nowSub = calculateSubmeasure(nowMeasure, maxSub)
 		prevBeatLength = nowBeatLength
 		prevTiming = timing.offset
@@ -185,7 +185,7 @@ export const parseOsuFile = async (beatMapList: BeatMapList, base64Image: string
 
 		measure = foundObject.measure + calculateMeasure(relativeOffset, foundObject.beatLength)
 		nowSub = calculateSubmeasure(measure, maxSub)
-		measureDigit = calculateMeasureDigit(measure)
+		measureDigit = calculateMeasureDigit(measure, maxSub)
 
 		const noteEvent: O2Event = {
 			type: 'note',
@@ -249,7 +249,7 @@ export const parseOsuFile = async (beatMapList: BeatMapList, base64Image: string
 			const relativeOffset = endTime - foundObject.offset
 			endMeasure = foundObject.measure + calculateMeasure(relativeOffset, foundObject.beatLength)
 			endNowSub = calculateSubmeasure(endMeasure, maxSub)
-			endMeasureDigit = calculateMeasureDigit(endMeasure)
+			endMeasureDigit = calculateMeasureDigit(endMeasure, maxSub)
 
 			const endLNEvent: O2Event = {
 				type: 'note',
