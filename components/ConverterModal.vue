@@ -43,7 +43,7 @@ async function transcode(music: File) {
 	const uInt8Array = new Uint8Array(arrayBuffer as ArrayBuffer)
 	await ffmpeg.writeFile(music.name, uInt8Array)
 
-	const command = []
+	const command = ['-i', music.name]
 	if (props.append > 0) {
 		command.push('-i', music.name)
 		// Add silence for append amount
@@ -51,11 +51,9 @@ async function transcode(music: File) {
 		// command.push('-af', `adelay=10000|10000`)
 	} else if (props.append < 0) {
 		// Seek to append amount
-		command.push('-ss', millisecondsToSexagesimal(Math.abs(props.append))).toString()
-		command.push('-i', music.name)
+		command.push('-ss', Math.abs(props.append / 1000).toString())
 	}
 	command.push('-c:a', 'libvorbis', newOggFileName)
-	console.log(command)
 	await ffmpeg.exec(command)
 
 	message.value = 'OJM is Done'
