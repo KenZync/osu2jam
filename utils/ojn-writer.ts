@@ -196,8 +196,6 @@ export const createOJN = async (
 	dataView.setInt32(cursor, songData.cover_offset, true)
 	cursor += 4
 
-	console.log(cursor)
-
 	for (const measure in parsedPackage) {
 		for (const channel in parsedPackage[measure]) {
 			// Measure

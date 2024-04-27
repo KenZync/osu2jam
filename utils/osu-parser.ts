@@ -127,8 +127,6 @@ export const parseOsuFile = async (beatMapList: BeatMapList, base64Image: string
 			sub: nowSub
 		})
 
-		console.log(parsedPackage, measureDigit, event)
-
 		parsedPackage[measureDigit][1].Events.push(event)
 	})
 

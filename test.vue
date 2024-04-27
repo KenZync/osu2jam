@@ -53,7 +53,6 @@ async function transcode() {
 
 	message.value = 'Complete transcoding'
 	const data = await ffmpeg.readFile('test.ogg')
-  console.log(data)
 	// video.value = URL.createObjectURL(new Blob([(data as Uint8Array).buffer], { type: 'video/mp4' }))
 	audio.value = URL.createObjectURL(new Blob([(data as Uint8Array).buffer], { type: 'audio/ogg' }))
 
