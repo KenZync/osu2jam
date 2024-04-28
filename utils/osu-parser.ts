@@ -140,7 +140,18 @@ export const parseOsuFile = async (beatMapList: BeatMapList, base64Image: string
 			sub: nowSub
 		})
 
-		parsedPackage[measureDigit][1].Events.push(event)
+		// Check if there's already an event with the same nowSub
+		const existingEventIndex = parsedPackage[measureDigit][1].Events.findIndex(
+			(existingEvent) => existingEvent.sub === event.sub
+		)
+
+		// If there's an existing event with the same nowSub, replace it
+		if (existingEventIndex !== -1) {
+			parsedPackage[measureDigit][1].Events[existingEventIndex] = event
+		} else {
+			// If no existing event with the same nowSub, push the new event
+			parsedPackage[measureDigit][1].Events.push(event)
+		}
 	})
 
 	// TODO MAKE IT BETTER

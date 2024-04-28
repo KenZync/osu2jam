@@ -101,7 +101,7 @@
 							color="pink"
 							variant="ghost"
 							icon="i-heroicons-arrow-down-tray"
-							@click="convert(chart as BeatMapList)"
+							@click="handleClickDownload(chart as BeatMapList)"
 						/>
 					</UTooltip>
 				</div>
@@ -299,7 +299,7 @@ const onInputChange = async (e: any) => {
 	}
 }
 
-const convert = async (chart: BeatMapList) => {
+const handleClickDownload = async (chart: BeatMapList) => {
 	beatmapId.value = Math.floor(chart.beatmap.metadata.beatmapId / 1000)
 	let append = await parseOsuFile(
 		chart as BeatMapList,
