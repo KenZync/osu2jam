@@ -8,8 +8,16 @@ export const createOJN = async (
 	mainBpm: number,
 	base64Image: string
 ) => {
-	const cover = resizeImage(base64Image, 800, 600, 'jpeg')
-	const bmp = resizeImage(base64Image, 80, 80, 'bmp')
+	let cover: ArrayBuffer
+	let bmp: ArrayBuffer
+
+	if (base64Image) {
+		cover = resizeImage(base64Image, 800, 600, 'jpeg')
+		bmp = resizeImage(base64Image, 80, 80, 'bmp')
+	} else {
+		cover = new ArrayBuffer(0)
+		bmp = new ArrayBuffer(0)
+	}
 
 	const ruleset = new ManiaRuleset()
 	const difficultyCalculator = ruleset.createDifficultyCalculator(parsedOsu)
