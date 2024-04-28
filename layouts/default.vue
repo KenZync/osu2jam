@@ -1,8 +1,9 @@
 <template>
 	<div class="sticky top-0 z-20 border-b border-gray-700 backdrop-blur-md h-16">
 		<UContainer class="flex items-center h-full justify-between">
-			<div class="text-xl font-bold">
+			<div class="text-xl font-bold space-x-2">
 				<NuxtLink to="/">Osu2Jam</NuxtLink>
+				<NuxtLink to="https://osu.ppy.sh/users/KenZ" target="_blank" class="text-pink-400">By KenZ</NuxtLink>
 			</div>
 			<!-- <ClientOnly>
 				<div class="hidden md:block">
