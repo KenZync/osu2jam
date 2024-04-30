@@ -75,12 +75,12 @@ export const parseOsuFile = async (beatMapList: BeatMapList, base64Image: string
 		const timingPoint = beatMapList.beatmap.controlPoints.timingPointAt(group.startTime)
 		const difficultyPoint = beatMapList.beatmap.controlPoints.difficultyPointAt(group.startTime)
 
-		let calBpm = timingPoint.bpm * difficultyPoint.sliderVelocity
+		let bpm = calculateBpm((timingPoint as any)._beatLength)
+		let calBpm = bpm * round(difficultyPoint.sliderVelocity)
 
 		if (calBpm <= mainBpm / 3) {
 			calBpm = mainBpm / 3
 		}
-
 		return {
 			offset: Math.max(timingPoint.startTime, difficultyPoint.startTime) + appendOffset,
 			bpm: calBpm
