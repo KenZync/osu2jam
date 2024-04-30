@@ -26,11 +26,15 @@ export const parseOsuFile = async (beatMapList: BeatMapList, base64Image: string
 
 	let lastTiming = 0
 	let firstTimingBpm = 0
-	const firstTimingNote = beatMapList.beatmap.controlPoints.groups[0].startTime
+	let firstBpm = 0
+	let firstTimingNote = 0
+	let firstTiming = 0
+	const firstTimingLine = beatMapList.beatmap.controlPoints.groups[0].startTime
 	outerLoop: for (const group of beatMapList.beatmap.controlPoints.groups) {
 		for (const point of group.controlPoints) {
 			if (point instanceof TimingPoint) {
 				firstTimingBpm = point.startTime // Storing the start time of the first timing point
+				firstBpm = calculateBpm((point.startTime as any)._beatLength)
 				break outerLoop // Break out of both loops
 			}
 		}
@@ -45,6 +49,7 @@ export const parseOsuFile = async (beatMapList: BeatMapList, base64Image: string
 
 	// Hit objects
 	if (beatMapList.beatmap.hitObjects.length > 0) {
+		firstTimingNote = beatMapList.beatmap.hitObjects[0].startTime
 		const lastHitObject = beatMapList.beatmap.hitObjects[beatMapList.beatmap.hitObjects.length - 1]
 		if ((lastHitObject as any).endTime) {
 			lastTiming = Math.max(lastTiming, lastHitObject.startTime, (lastHitObject as any).endTime)
@@ -55,13 +60,13 @@ export const parseOsuFile = async (beatMapList: BeatMapList, base64Image: string
 
 	const mainBpm = round(beatMapList.beatmap.bpm)
 	const mainBeatLength = calculateBeatLength(mainBpm)
+	const mainOneMeasureOffset = mainBeatLength * 4
 
-	let appendOffset = mainBeatLength * 4 - firstTimingBpm
-
-	while (firstTimingNote + appendOffset <= 1000) {
-		appendOffset = appendOffset + mainBeatLength * 4
+	let appendOffset = mainOneMeasureOffset - firstTimingBpm
+	firstTiming = Math.min(firstTimingNote, firstTimingLine)
+	while (firstTiming + appendOffset < mainOneMeasureOffset) {
+		appendOffset = appendOffset + mainOneMeasureOffset
 	}
-
 	const beatObject: BeatObject[] = []
 
 	//BPM
