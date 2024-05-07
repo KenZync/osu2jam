@@ -86,7 +86,7 @@
 					</div>
 				</div>
 				<div
-					class="flex-col justify-center items-center space-y-4 flex transition-all opacity-0 group-hover:opacity-100 group-hover:w-16 w-2"
+					class="flex-col justify-center items-center space-y-4 flex opacity-0 group-hover:opacity-100 transition-all group-hover:w-16 w-2 overflow-hidden"
 				>
 					<UTooltip text="Edit (WIP)">
 						<UButton color="pink" variant="ghost" icon="i-heroicons-pencil-square-20-solid" />
