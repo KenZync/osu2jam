@@ -353,7 +353,7 @@ export const parseOsuFile = async (beatMapList: BeatMapList, base64Image: string
 
 	parsedPackage[newLastMeasure.toString()] = lastMeasure
 
-	createOJN(beatMapList.beatmap, parsedPackage, mainBpm, base64Image)
+	createOJN(beatMapList.songId, beatMapList.beatmap, parsedPackage, mainBpm, base64Image)
 	return appendOffset - mainBeatLength * 2
 }
 

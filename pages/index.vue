@@ -27,17 +27,12 @@
 			<div class="flex relative">
 				<img
 					class="absolute rounded-l-md h-[140px] max-w-[186px] min-w-[186px]"
-					:src="getImage(chart.folder_id, chart.beatmap.events.backgroundPath || '')"
+					:src="getImage(chart.folderId, chart.beatmap.events.backgroundPath || '')"
 				/>
 				<div class="h-[140px] min-w-[186px] z-10 flex flex-row-reverse">
 					<div class="pt-2 pr-2">
 						<UTooltip text="o2maID">
-							<UBadge
-								color="white"
-								class="opacity-70 hover:opacity-100 transition"
-								size="xs"
-								:label="Math.floor(chart.beatmap.metadata.beatmapId / 1000)"
-							/>
+							<UBadge color="white" class="opacity-70 hover:opacity-100 transition" size="xs" :label="chart.songId" />
 						</UTooltip>
 					</div>
 				</div>
@@ -45,7 +40,7 @@
 				<div class="flex relative w-full bg-gradient-to-r from-gray-900 rounded-md -ml-1">
 					<img
 						class="absolute object-cover w-full h-[140px] opacity-10 rounded-md"
-						:src="getImage(chart.folder_id, chart.beatmap.events.backgroundPath || '')"
+						:src="getImage(chart.folderId, chart.beatmap.events.backgroundPath || '')"
 					/>
 					<div class="flex flex-col justify-between w-full relative p-2">
 						<div class="z-10">
@@ -108,28 +103,32 @@
 			</div>
 		</UCard>
 	</div>
-	<UModal v-model="convertOJN" :prevent-close="convertOJN">
-		<ConverterModal :id="beatmapId" :music="musicFile!" :append="appendOffset" @done="weDone" />
+	<UModal v-model="convertOJM" :prevent-close="convertOJM">
+		<UCard>
+			<template #header> Converting OJM </template>
+			<UProgress :value="percent" indicator />
+		</UCard>
 	</UModal>
 </template>
 
 <script setup lang="ts">
 import { BlobReader, BlobWriter, ZipReader } from '@zip.js/zip.js'
 import { ManiaRuleset } from 'osu-mania-stable'
+import { FFmpeg } from '@ffmpeg/ffmpeg'
+import { toBlobURL } from '@ffmpeg/util'
 
 useHead({
 	title: 'Osu2Jam',
 	meta: [{ name: 'description', content: 'Osu to O2Jam Converter' }]
 })
 
-const convertOJN = ref(false)
+const convertOJM = ref(false)
 
 const osuBeatmapList = ref<BeatMapList[]>([])
 const folderList = ref<Folder[]>([])
 
-const musicFile = ref<File>()
-const appendOffset = ref(0)
-const beatmapId = ref(1)
+const percent = ref(0)
+const elapse = ref(0)
 
 const getImage = (folderId: number, imageName: string) => {
 	const folder = folderList.value.find((folder) => folder.id === folderId)
@@ -244,7 +243,8 @@ const onInputChange = async (e: any) => {
 						const difficultyCalculator = ruleset.createDifficultyCalculator(parsedOsu)
 						const difficultyAttributes = difficultyCalculator.calculate()
 						osuBeatmapList.value.push({
-							folder_id: folder.id,
+							songId: Number(parsedOsu.metadata.beatmapId.toString().slice(-4)),
+							folderId: folder.id,
 							beatmap: parsedOsu,
 							stars: difficultyAttributes.starRating
 							// metadata: metadata
@@ -266,17 +266,47 @@ const onInputChange = async (e: any) => {
 }
 
 const handleClickDownload = async (chart: BeatMapList) => {
-	beatmapId.value = Math.floor(chart.beatmap.metadata.beatmapId / 1000)
+	percent.value = 0
+	elapse.value = 0
 	let append = await parseOsuFile(
 		chart as BeatMapList,
-		getImage(chart.folder_id, chart.beatmap.events.backgroundPath || '')
+		getImage(chart.folderId, chart.beatmap.events.backgroundPath || '')
 	)
-	musicFile.value = getMusic(chart.folder_id, chart.beatmap.general.audioFilename)
-	convertOJN.value = true
-	appendOffset.value = append
+	convertOJM.value = true
+
+	let ojm: OJM = await transcode(getMusic(chart.folderId, chart.beatmap.general.audioFilename)!, append)
+	await createOJM(ojm.name, ojm.data, chart.songId)
+	convertOJM.value = false
 }
 
-const weDone = () => {
-	convertOJN.value = false
+async function transcode(music: File, append: number) {
+	const newOggFileName = music.name + '.ogg'
+	const ffmpeg = new FFmpeg()
+	ffmpeg.on('progress', ({ progress, time }) => {
+		percent.value = progress * 100
+		elapse.value = time
+	})
+	await ffmpeg.load({
+		coreURL: await toBlobURL(`/ffmpeg-core.js`, 'text/javascript'),
+		wasmURL: await toBlobURL(`/ffmpeg-core.wasm`, 'applicaiton/wasm'),
+		workerURL: await toBlobURL(`/ffmpeg-core.worker.js`, 'text/javascript')
+	})
+	let arrayBuffer = await music?.arrayBuffer()
+	const uInt8Array = new Uint8Array(arrayBuffer as ArrayBuffer)
+	await ffmpeg.writeFile(music.name, uInt8Array)
+
+	const command = ['-i', music.name]
+	if (append > 0) {
+		// Add silence for append amount
+		command.push('-af', `adelay=${append}|${append}`)
+	} else if (append < 0) {
+		// Seek to append amount
+		command.push('-ss', Math.abs(append / 1000).toString())
+	}
+	command.push('-vn', '-c:a', 'libvorbis', newOggFileName)
+	await ffmpeg.exec(command)
+	const data = (await ffmpeg.readFile(newOggFileName)) as Uint8Array
+	// window.open(URL.createObjectURL(new Blob([(data as Uint8Array).buffer], { type: 'audio/ogg' })))
+	return { name: newOggFileName, data }
 }
 </script>

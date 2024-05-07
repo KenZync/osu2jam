@@ -3,6 +3,7 @@ import { ManiaRuleset } from 'osu-mania-stable'
 import { Buffer } from 'buffer'
 
 export const createOJN = async (
+	songId: number,
 	parsedOsu: Beatmap,
 	parsedPackage: ojnPackage,
 	mainBpm: number,
@@ -25,10 +26,9 @@ export const createOJN = async (
 	const level = Math.round(difficultyAttributes.starRating * 10)
 	const noteCount = parsedOsu.hittable + parsedOsu.holdable * 2
 	const packageCount = Object.values(parsedPackage).reduce((acc, measure) => acc + Object.keys(measure).length, 0)
-	const songID = Math.floor(parsedOsu.metadata.beatmapId / 1000)
 
 	const songData = {
-		songid: songID,
+		songid: songId,
 		signature: Buffer.from('ojn\x00'),
 		genre: 0,
 		bpm: round(mainBpm),
@@ -56,7 +56,7 @@ export const createOJN = async (
 		title: Buffer.from(parsedOsu.metadata.title),
 		artist: Buffer.from(parsedOsu.metadata.artist),
 		noter: Buffer.from(parsedOsu.metadata.creator),
-		ojm_file: Buffer.from(`o2ma${songID}.ojm`),
+		ojm_file: Buffer.from(`o2ma${songId}.ojm`),
 		cover_size: cover.byteLength,
 		time_ex: Math.floor(parsedOsu.length / 1000),
 		time_nx: Math.floor(parsedOsu.length / 1000),

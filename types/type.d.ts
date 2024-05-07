@@ -20,7 +20,7 @@ declare global {
 	}
 
 	interface Header {
-		songID: number
+		songId: number
 		bpm: number
 		difficulty: Difficulty
 		bmpSize: number
@@ -81,9 +81,15 @@ declare global {
 	// }
 
 	interface BeatMapList {
-		folder_id: number
+		songId: number
+		folderId: number
 		beatmap: Beatmap
 		stars: number
 		// metadata: Metadata
+	}
+
+	interface OJM {
+		name: string
+		data: Uint8Array
 	}
 }
