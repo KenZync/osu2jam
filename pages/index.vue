@@ -288,7 +288,7 @@ async function transcode(music: File, append: number) {
 	})
 	await ffmpeg.load({
 		coreURL: await toBlobURL(`/ffmpeg-core.js`, 'text/javascript'),
-		wasmURL: await toBlobURL(`/ffmpeg-core.wasm`, 'applicaiton/wasm'),
+		wasmURL: await getFfmpegWasmPath(),
 		workerURL: await toBlobURL(`/ffmpeg-core.worker.js`, 'text/javascript')
 	})
 	let arrayBuffer = await music?.arrayBuffer()
