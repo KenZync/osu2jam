@@ -5,6 +5,7 @@
 			<NuxtPage />
 		</UContainer>
 		<UNotifications />
+		<USlideovers />
 	</NuxtLayout>
 </template>
 

@@ -22,6 +22,18 @@
 		</div>
 	</DropZone>
 
+	<UCard :ui="{ background: 'dark:bg-gray-900' }" class="mt-4">
+		<div class="flex space-x-4 justify-center items-center">
+			<UToggle
+				on-icon="i-heroicons-check-20-solid"
+				off-icon="i-heroicons-x-mark-20-solid"
+				color="pink"
+				v-model="useDifficultyAsTitle"
+			/>
+			<p>Use Difficulty as Title (ex. Song Pack, Multiple Songs Beatmap)</p>
+		</div>
+	</UCard>
+
 	<div class="grid lg:grid-cols-2 gap-3 pt-4">
 		<UCard class="group min-h-[140px]" v-for="(chart, i) in osuBeatmapList" :ui="{ body: { padding: '' } }">
 			<div class="flex relative">
@@ -45,7 +57,7 @@
 					<div class="flex flex-col justify-between w-full relative p-2">
 						<div class="z-10">
 							<div class="font-bold">
-								{{ chart.beatmap.metadata.title }}
+								{{ useDifficultyAsTitle ? chart.beatmap.metadata.version : chart.beatmap.metadata.title }}
 							</div>
 							<div class="font-bold text-sm">by {{ chart.beatmap.metadata.artist }}</div>
 						</div>
@@ -78,7 +90,10 @@
 										<UBadge class="break-all" color="yellow" :label="chart.beatmap.metadata.version" />
 									</UTooltip>
 									<UTooltip text="Level Hard / HX">
-										<UBadge :color="getColor(Math.round(chart.stars * 10))" :label="Math.round(chart.stars * 10)" />
+										<UBadge
+											:color="getColor(calculateLevelFromStars(chart.stars))"
+											:label="calculateLevelFromStars(chart.stars)"
+										/>
 									</UTooltip>
 								</div>
 							</div>
@@ -88,8 +103,13 @@
 				<div
 					class="flex-col justify-center items-center space-y-4 flex opacity-0 group-hover:opacity-100 transition-all group-hover:w-16 w-2 overflow-hidden"
 				>
-					<UTooltip text="Edit (WIP)">
-						<UButton color="pink" variant="ghost" icon="i-heroicons-pencil-square-20-solid" />
+					<UTooltip text="Customize" :popper="{ placement: 'top' }">
+						<UButton
+							color="pink"
+							variant="ghost"
+							icon="i-heroicons-pencil-square-20-solid"
+							@click="openSlideover(chart as BeatMapList)"
+						/>
 					</UTooltip>
 					<UTooltip text="Download">
 						<UButton
@@ -116,6 +136,7 @@ import { BlobReader, BlobWriter, ZipReader } from '@zip.js/zip.js'
 import { ManiaRuleset } from 'osu-mania-stable'
 import { FFmpeg } from '@ffmpeg/ffmpeg'
 import { toBlobURL } from '@ffmpeg/util'
+import { EditSongInfo } from '#components'
 
 useHead({
 	title: 'Osu2Jam',
@@ -123,6 +144,7 @@ useHead({
 })
 
 const convertOJM = ref(false)
+const useDifficultyAsTitle = ref(false)
 
 const osuBeatmapList = ref<BeatMapList[]>([])
 const folderList = ref<Folder[]>([])
@@ -147,9 +169,18 @@ const getImage = (folderId: number, imageName: string) => {
 	return imagePath
 }
 
-const getMusic = (folderId: number, musicName: string) => {
+const getMusic = (folderId: number, musicName: string): File => {
 	const folder = folderList.value.find((folder) => folder.id === folderId)
-	return folder?.files.find((file) => file.name === musicName)
+	if (!folder) {
+		throw new Error(`Folder with ID ${folderId} not found`)
+	}
+
+	const file = folder.files.find((file) => file.name === musicName)
+	if (!file) {
+		throw new Error(`Music file ${musicName} not found in folder ${folderId}`)
+	}
+
+	return file
 }
 
 const onInputChange = async (e: any) => {
@@ -196,7 +227,6 @@ const onInputChange = async (e: any) => {
 					const zipFileReader = new BlobReader(file)
 					const zipReader = new ZipReader(zipFileReader)
 					const entries = await zipReader.getEntries()
-
 					await Promise.all(
 						entries.map(async (entry) => {
 							const blob = await entry.getData!(new BlobWriter())
@@ -227,42 +257,43 @@ const onInputChange = async (e: any) => {
 		if (unknownFolder.files.length !== 0) {
 			folderList.value.push(unknownFolder)
 		}
-		for (const [index, folder] of folderList.value.entries()) {
-			for (const file of folder.files) {
-				if (file.name.match(/\.osu$/i)) {
-					const fileReader = new FileReader()
-					fileReader.readAsText(file)
-					const osu: string = await new Promise((resolve) => {
-						fileReader.onload = function () {
-							resolve(fileReader.result as string)
-						}
-					})
-					const parsedOsu = await parseOsuTextFile(osu)
-					const ruleset = new ManiaRuleset()
-					if (parsedOsu.difficulty.circleSize === 7) {
-						const difficultyCalculator = ruleset.createDifficultyCalculator(parsedOsu)
-						const difficultyAttributes = difficultyCalculator.calculate()
-						osuBeatmapList.value.push({
-							songId: Number(parsedOsu.metadata.beatmapId.toString().slice(-4)),
-							folderId: folder.id,
-							beatmap: parsedOsu,
-							stars: difficultyAttributes.starRating
-							// metadata: metadata
-						})
-					}
-				}
-				if (file.name.match(/\.png$|\.jpg$|\.jpeg$/i)) {
-					let base64 = await blobToBase64Async(file)
 
-					// Push the new image object into the images array
-					folderList.value[index].images[file.name] = 'data:image/png;base64,' + base64
-				}
-			}
-		}
+		folderList.value.map(async (folder, index) => await processFolder(folder, index))
 	} catch (err) {
 		alert('err' + err)
 	} finally {
 	}
+}
+
+const processFolder = async (folder: Folder, index: number): Promise<void> => {
+	const folderPromises: Promise<void>[] = folder.files.map(async (file) => {
+		if (file.name.match(/\.osu$/i)) {
+			const fileReader = new FileReader()
+			fileReader.readAsText(file)
+			const osu: string = await new Promise((resolve) => {
+				fileReader.onload = function () {
+					resolve(fileReader.result as string)
+				}
+			})
+			const parsedOsu = await parseOsuTextFile(osu)
+			const ruleset = new ManiaRuleset()
+			if (parsedOsu.difficulty.circleSize === 7) {
+				const difficultyCalculator = ruleset.createDifficultyCalculator(parsedOsu)
+				const difficultyAttributes = difficultyCalculator.calculate()
+				osuBeatmapList.value.push({
+					songId: Number(parsedOsu.metadata.beatmapId.toString().slice(-4)),
+					folderId: folder.id,
+					beatmap: parsedOsu,
+					stars: difficultyAttributes.starRating
+				})
+			}
+		}
+		if (file.name.match(/\.png$|\.jpg$|\.jpeg$/i)) {
+			const base64 = await blobToBase64Async(file)
+			folderList.value[index].images[file.name] = 'data:image/png;base64,' + base64
+		}
+	})
+	await Promise.all(folderPromises)
 }
 
 const handleClickDownload = async (chart: BeatMapList) => {
@@ -270,11 +301,12 @@ const handleClickDownload = async (chart: BeatMapList) => {
 	elapse.value = 0
 	let append = await parseOsuFile(
 		chart as BeatMapList,
+		getImage(chart.folderId, chart.beatmap.events.backgroundPath || ''),
 		getImage(chart.folderId, chart.beatmap.events.backgroundPath || '')
 	)
 	convertOJM.value = true
 
-	let ojm: OJM = await transcode(getMusic(chart.folderId, chart.beatmap.general.audioFilename)!, append)
+	let ojm: OJM = await transcode(getMusic(chart.folderId, chart.beatmap.general.audioFilename), append)
 	await createOJM(ojm.name, ojm.data, chart.songId)
 	convertOJM.value = false
 }
@@ -308,5 +340,16 @@ async function transcode(music: File, append: number) {
 	const data = (await ffmpeg.readFile(newOggFileName)) as Uint8Array
 	// window.open(URL.createObjectURL(new Blob([(data as Uint8Array).buffer], { type: 'audio/ogg' })))
 	return { name: newOggFileName, data }
+}
+
+const slideover = useSlideover()
+function openSlideover(chart: BeatMapList) {
+	slideover.open(EditSongInfo, {
+		beatmapList: chart,
+		base64Image: getImage(chart.folderId, chart.beatmap.events.backgroundPath || ''),
+		onClose: slideover.close,
+		onDownload: handleClickDownload,
+		useDifficultyAsTitle: useDifficultyAsTitle.value
+	})
 }
 </script>

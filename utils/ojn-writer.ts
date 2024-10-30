@@ -7,23 +7,25 @@ export const createOJN = async (
 	parsedOsu: Beatmap,
 	parsedPackage: ojnPackage,
 	mainBpm: number,
-	base64Image: string
+	base64Image: string,
+	base64Bmp: string,
+	stars: number
 ) => {
-	let cover: ArrayBuffer
-	let bmp: ArrayBuffer
+	let cover: ArrayBuffer | Buffer
+	let bmp: ArrayBuffer | Buffer
 
 	if (base64Image) {
 		cover = resizeImage(base64Image, 800, 600, 'jpeg')
-		bmp = resizeImage(base64Image, 80, 80, 'bmp')
 	} else {
 		cover = new ArrayBuffer(0)
+	}
+	if (base64Bmp) {
+		bmp = resizeImage(base64Bmp, 80, 80, 'bmp')
+	} else {
 		bmp = new ArrayBuffer(0)
 	}
 
-	const ruleset = new ManiaRuleset()
-	const difficultyCalculator = ruleset.createDifficultyCalculator(parsedOsu)
-	const difficultyAttributes = difficultyCalculator.calculate()
-	const level = Math.round(difficultyAttributes.starRating * 10)
+	const level = calculateLevelFromStars(stars)
 	const noteCount = parsedOsu.hittable + parsedOsu.holdable * 2
 	const packageCount = Object.values(parsedPackage).reduce((acc, measure) => acc + Object.keys(measure).length, 0)
 
