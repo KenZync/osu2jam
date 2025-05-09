@@ -234,7 +234,7 @@ export const parseOsuFile = async (beatMapList: BeatMapList, base64Image: string
 			parsedPackage[measureDigit][key].Events.push(noteEvent)
 		}
 
-		if (note.hitType === 128) {
+		if (note.hitType === 128 || note.hitType === 132) {
 			const startLNEvent: O2Event = {
 				type: 'note',
 				value: 1,
