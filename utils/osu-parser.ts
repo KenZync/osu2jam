@@ -3,7 +3,7 @@ import { BeatmapDecoder } from 'osu-parsers'
 
 const maxSub = 192
 
-export const parseOsuFile = async (beatMapList: BeatMapList, base64Image: string, base64Bmp: string) => {
+export const parseOsuFile = async (beatMapList: BeatMapList, base64Image: string, base64Bmp: string, useDifficultyAsTitle: boolean = false) => {
 	const parsedPackage: ojnPackage = {}
 	parsedPackage[0] = {
 		9: {
@@ -234,7 +234,7 @@ export const parseOsuFile = async (beatMapList: BeatMapList, base64Image: string
 			parsedPackage[measureDigit][key].Events.push(noteEvent)
 		}
 
-		if (note.hitType === 128 || note.hitType === 132) {
+		if (note.hitType === 128 || (note.hitType as any) === 132) {
 			const startLNEvent: O2Event = {
 				type: 'note',
 				value: 1,
@@ -353,7 +353,7 @@ export const parseOsuFile = async (beatMapList: BeatMapList, base64Image: string
 
 	parsedPackage[newLastMeasure.toString()] = lastMeasure
 
-	createOJN(beatMapList.songId, beatMapList.beatmap, parsedPackage, mainBpm, base64Image, base64Bmp, beatMapList.stars)
+	createOJN(beatMapList.songId, beatMapList.beatmap, parsedPackage, mainBpm, base64Image, base64Bmp, beatMapList.stars, useDifficultyAsTitle)
 	return appendOffset - mainBeatLength * 2
 }
 

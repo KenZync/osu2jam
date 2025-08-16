@@ -9,7 +9,8 @@ export const createOJN = async (
 	mainBpm: number,
 	base64Image: string,
 	base64Bmp: string,
-	stars: number
+	stars: number,
+	useDifficultyAsTitle: boolean = false
 ) => {
 	let cover: ArrayBuffer | Buffer
 	let bmp: ArrayBuffer | Buffer
@@ -55,7 +56,7 @@ export const createOJN = async (
 		old_3: Buffer.from(''),
 		bmp_size: bmp.byteLength,
 		old_4: 0,
-		title: Buffer.from(parsedOsu.metadata.title),
+		title: Buffer.from(useDifficultyAsTitle ? parsedOsu.metadata.version : parsedOsu.metadata.title),
 		artist: Buffer.from(parsedOsu.metadata.artist),
 		noter: Buffer.from(parsedOsu.metadata.creator),
 		ojm_file: Buffer.from(`o2ma${songId}.ojm`),

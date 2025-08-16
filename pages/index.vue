@@ -296,13 +296,14 @@ const processFolder = async (folder: Folder, index: number): Promise<void> => {
 	await Promise.all(folderPromises)
 }
 
-const handleClickDownload = async (chart: BeatMapList) => {
+const handleClickDownload = async (chart: BeatMapList, useDifficultyAsTitleOverride?: boolean) => {
 	percent.value = 0
 	elapse.value = 0
 	let append = await parseOsuFile(
 		chart as BeatMapList,
 		getImage(chart.folderId, chart.beatmap.events.backgroundPath || ''),
-		getImage(chart.folderId, chart.beatmap.events.backgroundPath || '')
+		getImage(chart.folderId, chart.beatmap.events.backgroundPath || ''),
+		useDifficultyAsTitleOverride !== undefined ? useDifficultyAsTitleOverride : useDifficultyAsTitle.value
 	)
 	convertOJM.value = true
 

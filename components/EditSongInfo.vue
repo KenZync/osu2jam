@@ -16,7 +16,7 @@ const props = defineProps({
 
 const emits = defineEmits<{
 	close: []
-	download: [chart: BeatMapList]
+	download: [chart: BeatMapList, useDifficultyAsTitle: boolean]
 }>()
 
 const chart = ref(props.beatmapList.beatmap)
@@ -143,7 +143,7 @@ const bpm = computed(() => round(chart.value.bpm))
 				</div>
 				<div class="flex justify-between">
 					<UButton
-						@click="emits('download', props.beatmapList)"
+						@click="emits('download', props.beatmapList, props.useDifficultyAsTitle)"
 						color="blue"
 						class="w-full justify-center px-4"
 						size="xl"
